@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-4xl space-y-5">
+  <div class="mx-auto max-w-4xl space-y-5">
     <h1 class="tool-heading text-xl font-semibold text-slate-100">Edit Link</h1>
 
     <AppCard v-if="loading" variant="compact" class="py-16 text-center text-slate-400">Loading…</AppCard>

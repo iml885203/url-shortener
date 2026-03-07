@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-4xl space-y-5">
+  <div class="mx-auto max-w-4xl space-y-5">
     <h1 class="tool-heading text-xl font-semibold text-slate-100">New Link</h1>
 
     <div class="md:flex md:items-start md:gap-6">
