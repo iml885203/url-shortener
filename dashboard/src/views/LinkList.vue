@@ -25,7 +25,7 @@
 
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium text-slate-100">{{ link.ogTitle || link.url }}</p>
-            <p class="mt-0.5 truncate text-xs text-slate-400">{{ link.url }}</p>
+            <p v-if="link.ogTitle" class="mt-0.5 truncate text-xs text-slate-400">{{ link.url }}</p>
           </div>
 
           <div class="text-right">
@@ -96,7 +96,7 @@
 
         <div class="min-w-0 flex-1">
           <p class="truncate text-sm font-medium text-slate-100">{{ link.ogTitle || link.url }}</p>
-          <p class="mt-0.5 truncate text-xs text-slate-400">{{ link.url }}</p>
+          <p v-if="link.ogTitle" class="mt-0.5 truncate text-xs text-slate-400">{{ link.url }}</p>
 
           <div class="mt-2 flex flex-wrap items-center gap-2">
             <a :href="link.shortUrl" target="_blank" class="tool-link font-mono text-xs">{{ link.shortUrl }}</a>
