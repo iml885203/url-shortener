@@ -173,6 +173,7 @@
 
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, ref, watch } from 'vue';
+import { copyToClipboard } from '@/utils/clipboard';
 import { createLink, fetchDestinationOgPreview, type DestinationOgPreview, type Link } from '@/api/client';
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
 import AppButton from '@/components/ui/AppButton.vue';
@@ -317,6 +318,6 @@ function createAnother() {
 }
 
 function copyUrl(text: string) {
-  navigator.clipboard.writeText(text).then(() => showCopyToast()).catch(() => {});
+  copyToClipboard(text).then((ok) => { if (ok) showCopyToast(); });
 }
 </script>

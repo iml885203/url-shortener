@@ -139,6 +139,7 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue';
+import { copyToClipboard } from '@/utils/clipboard';
 import { getOverviewStats, type OverviewStats } from '@/api/client';
 import AppButton from '@/components/ui/AppButton.vue';
 import AppCard from '@/components/ui/AppCard.vue';
@@ -177,6 +178,6 @@ function shortDate(date: string): string {
 }
 
 function copyUrl(text: string) {
-  navigator.clipboard.writeText(text).then(() => showCopyToast()).catch(() => {});
+  copyToClipboard(text).then((ok) => { if (ok) showCopyToast(); });
 }
 </script>

@@ -119,6 +119,7 @@
 
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { copyToClipboard } from '@/utils/clipboard';
 import { useRoute } from 'vue-router';
 import { fetchDestinationOgPreview, listLinks, updateLink, uploadImage, type DestinationOgPreview, type Link } from '@/api/client';
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
@@ -318,6 +319,6 @@ async function handleFileChange(evt: Event) {
 }
 
 function copyUrl(text: string) {
-  navigator.clipboard.writeText(text).then(() => showCopyToast()).catch(() => {});
+  copyToClipboard(text).then((ok) => { if (ok) showCopyToast(); });
 }
 </script>
