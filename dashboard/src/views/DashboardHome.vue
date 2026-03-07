@@ -1,13 +1,8 @@
 <template>
   <div class="space-y-5">
     <div class="flex items-center justify-between gap-3">
-      <h1 class="text-xl font-semibold tracking-tight text-slate-100">Overview</h1>
-      <RouterLink
-        to="/links/new"
-        class="inline-flex items-center border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm font-medium text-slate-100 hover:border-blue-500 hover:text-blue-400 transition-colors"
-      >
-        New link
-      </RouterLink>
+      <h1 class="tool-heading text-xl font-semibold tracking-tight text-slate-100">Overview</h1>
+      <RouterLink to="/links/new" class="tool-btn-secondary h-9 px-3 text-sm">New link</RouterLink>
     </div>
 
     <div v-if="loading" class="space-y-5">
@@ -38,12 +33,7 @@
     <div v-else-if="isEmpty" class="border border-slate-800 bg-slate-900 p-8 text-center">
       <h2 class="text-base font-medium text-slate-100">No analytics yet</h2>
       <p class="mt-2 text-sm text-slate-400">Create links and share them to start seeing activity here.</p>
-      <RouterLink
-        to="/links/new"
-        class="mt-5 inline-flex items-center border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm font-medium text-slate-100 hover:border-blue-500 hover:text-blue-400 transition-colors"
-      >
-        Create first link
-      </RouterLink>
+      <RouterLink to="/links/new" class="tool-btn-secondary mt-5 h-9 px-3 text-sm">Create first link</RouterLink>
     </div>
 
     <div v-else class="space-y-5">
@@ -65,7 +55,7 @@
       <section class="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div class="border border-slate-800 bg-slate-900 p-4">
           <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-slate-200">Top links</h2>
+            <h2 class="tool-heading text-sm font-semibold text-slate-200">Top links</h2>
             <RouterLink to="/links" class="text-xs text-blue-400 hover:text-blue-300">View all</RouterLink>
           </div>
 
@@ -92,7 +82,7 @@
                   >
                   <button
                     type="button"
-                    class="text-xs text-slate-400 hover:text-slate-100"
+                    class="cursor-pointer text-xs text-slate-400 transition-colors duration-200 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     @click="copyUrl(link.shortUrl)"
                     title="Copy short URL"
                   >
@@ -109,7 +99,7 @@
                   >
                   <button
                     type="button"
-                    class="text-xs text-slate-400 hover:text-slate-100"
+                    class="cursor-pointer text-xs text-slate-400 transition-colors duration-200 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     @click="copyUrl(link.longUrl)"
                     title="Copy long URL"
                   >
@@ -122,7 +112,7 @@
         </div>
 
         <div class="border border-slate-800 bg-slate-900 p-4">
-          <h2 class="mb-4 text-sm font-semibold text-slate-200">Clicks by day (14 days)</h2>
+          <h2 class="tool-heading mb-4 text-sm font-semibold text-slate-200">Clicks by day (14 days)</h2>
           <div v-if="stats!.clicksByDay.length === 0" class="text-sm text-slate-500">No data yet</div>
           <div v-else class="space-y-2">
             <div v-for="row in stats!.clicksByDay" :key="row.date" class="flex items-center gap-3">

@@ -1,164 +1,168 @@
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6 gap-3">
-      <h1 class="text-xl font-semibold text-white">Links</h1>
-      <RouterLink
-        to="/links/new"
-        class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors whitespace-nowrap"
-      >
-        + New Link
-      </RouterLink>
+  <div class="space-y-5">
+    <div class="flex items-center justify-between gap-3">
+      <h1 class="tool-heading text-xl font-semibold text-slate-100">Links</h1>
+      <RouterLink to="/links/new" class="tool-btn-primary">New Link</RouterLink>
     </div>
 
-    <div v-if="loading" class="text-center py-16 text-gray-500">Loading…</div>
-    <div v-else-if="error" class="text-center py-16 text-red-400">{{ error }}</div>
-    <div v-else-if="links.length === 0" class="text-center py-16 text-gray-500">
+    <div v-if="loading" class="rounded-lg border border-slate-800 bg-slate-900 py-16 text-center text-slate-400">Loading…</div>
+    <div v-else-if="error" class="rounded-lg border border-slate-800 bg-slate-900 py-16 text-center text-red-400">{{ error }}</div>
+    <div v-else-if="links.length === 0" class="rounded-lg border border-slate-800 bg-slate-900 py-16 text-center text-slate-400">
       No links yet.
-      <RouterLink to="/links/new" class="text-indigo-400 hover:underline">Create one.</RouterLink>
+      <RouterLink to="/links/new" class="text-blue-400 transition-colors duration-200 hover:text-blue-300">Create one.</RouterLink>
     </div>
 
-    <!-- Mobile: card list -->
+    <!-- Mobile -->
     <div v-else class="flex flex-col gap-3 sm:hidden">
-      <div
-        v-for="link in links"
-        :key="link.id"
-        class="bg-gray-800 rounded-xl border border-gray-700 p-4 space-y-3"
-      >
+      <div v-for="link in links" :key="link.id" class="tool-panel p-4 space-y-3">
         <div class="flex items-start gap-3">
-          <img
-            v-if="link.ogImage"
-            :src="link.ogImage"
-            alt=""
-            class="w-10 h-10 rounded object-cover flex-shrink-0"
-          />
-          <div v-else class="w-10 h-10 rounded bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-500 text-lg">
-            🔗
+          <img v-if="link.ogImage" :src="link.ogImage" alt="" class="h-10 w-10 flex-shrink-0 rounded-md object-cover" />
+          <div v-else class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-slate-700 bg-slate-950 text-slate-400">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5l3-3m-6.75 7.5l-1.5 1.5a3.182 3.182 0 104.5 4.5l3-3a3.182 3.182 0 00-4.5-4.5l-1.5 1.5m9-9l1.5-1.5a3.182 3.182 0 10-4.5-4.5l-3 3a3.182 3.182 0 104.5 4.5l1.5-1.5" />
+            </svg>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-gray-100 truncate">{{ link.ogTitle || link.url }}</p>
-            <p class="text-xs text-gray-500 truncate mt-0.5">{{ link.url }}</p>
+
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-medium text-slate-100">{{ link.ogTitle || link.url }}</p>
+            <p class="mt-0.5 truncate text-xs text-slate-400">{{ link.url }}</p>
           </div>
-          <div class="text-right flex-shrink-0">
-            <p class="text-sm font-semibold text-gray-200">{{ link.clickCount ?? 0 }}</p>
-            <p class="text-xs text-gray-500">clicks</p>
+
+          <div class="text-right">
+            <p class="text-sm font-semibold text-slate-100">{{ link.clickCount ?? 0 }}</p>
+            <p class="text-xs text-slate-400">clicks</p>
           </div>
         </div>
 
-        <!-- Short URL -->
-        <div class="flex items-center gap-2 bg-gray-700/50 rounded-md px-3 py-1.5">
-          <span class="text-xs text-gray-400 flex-shrink-0">Short:</span>
-          <a :href="link.shortUrl" target="_blank" class="text-xs text-indigo-400 hover:underline font-mono flex-1 truncate">{{ link.shortUrl }}</a>
-          <button
-            type="button"
-            @click="copyUrl(link.shortUrl)"
-            class="text-gray-500 hover:text-gray-200 transition-colors flex-shrink-0 p-1"
-            title="Copy short URL"
-          >📋</button>
+        <div class="space-y-2">
+          <div class="rounded-md border border-slate-800 bg-slate-950 px-3 py-2">
+            <div class="mb-1 text-[11px] uppercase tracking-wide text-slate-400">Short URL</div>
+            <div class="flex items-center gap-2">
+              <a :href="link.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-xs">{{ link.shortUrl }}</a>
+              <button
+                type="button"
+                :aria-label="`Copy short URL for link ${link.id}`"
+                class="tool-icon-btn"
+                @click="copyUrl(link.shortUrl)"
+              >
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="rounded-md border border-slate-800 bg-slate-950 px-3 py-2">
+            <div class="mb-1 text-[11px] uppercase tracking-wide text-slate-400">Long URL</div>
+            <div class="flex items-center gap-2">
+              <a :href="link.longUrl" target="_blank" class="truncate font-mono text-xs text-slate-400 transition-colors duration-200 hover:text-slate-200">{{ link.longUrl }}</a>
+              <button
+                type="button"
+                :aria-label="`Copy long URL for link ${link.id}`"
+                class="tool-icon-btn"
+                @click="copyUrl(link.longUrl)"
+              >
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Long URL -->
-        <div class="flex items-center gap-2 bg-gray-700/50 rounded-md px-3 py-1.5">
-          <span class="text-xs text-gray-400 flex-shrink-0">Long:</span>
-          <a :href="link.longUrl" target="_blank" class="text-xs text-gray-400 hover:underline font-mono flex-1 truncate">{{ link.longUrl }}</a>
-          <button
-            type="button"
-            @click="copyUrl(link.longUrl)"
-            class="text-gray-500 hover:text-gray-200 transition-colors flex-shrink-0 p-1"
-            title="Copy long URL"
-          >📋</button>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex gap-2 pt-1">
-          <RouterLink :to="`/links/${link.id}/stats`" class="flex-1 text-center text-xs text-gray-400 hover:text-white px-2 py-1.5 rounded bg-gray-700 hover:bg-gray-600 transition-colors">Stats</RouterLink>
-          <RouterLink :to="`/links/${link.id}/edit`" class="flex-1 text-center text-xs text-gray-400 hover:text-white px-2 py-1.5 rounded bg-gray-700 hover:bg-gray-600 transition-colors">Edit</RouterLink>
-          <button @click="promptDelete(link)" class="flex-1 text-xs text-red-400 hover:text-red-300 px-2 py-1.5 rounded bg-gray-700 hover:bg-red-900/30 transition-colors">Delete</button>
+        <div class="grid grid-cols-3 gap-2 pt-1">
+          <RouterLink :to="`/links/${link.id}/stats`" class="tool-btn-secondary h-9 px-0 text-xs">Stats</RouterLink>
+          <RouterLink :to="`/links/${link.id}/edit`" class="tool-btn-secondary h-9 px-0 text-xs">Edit</RouterLink>
+          <button type="button" class="tool-btn-secondary h-9 px-0 text-xs" @click="promptDelete(link)">Delete</button>
         </div>
       </div>
     </div>
 
-    <!-- Desktop: row list -->
-    <div v-if="links.length > 0" class="hidden sm:block bg-gray-800 rounded-xl border border-gray-700 divide-y divide-gray-700 shadow-sm">
-      <div v-for="link in links" :key="link.id" class="p-4 flex items-start gap-4">
-        <!-- OG image thumbnail -->
-        <img
-          v-if="link.ogImage"
-          :src="link.ogImage"
-          alt=""
-          class="w-12 h-12 rounded object-cover flex-shrink-0"
-        />
-        <div v-else class="w-12 h-12 rounded bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-500 text-xl">
-          🔗
+    <!-- Desktop -->
+    <div v-if="links.length > 0" class="hidden sm:block tool-panel divide-y divide-slate-800">
+      <div v-for="link in links" :key="link.id" class="flex items-start gap-4 p-4">
+        <img v-if="link.ogImage" :src="link.ogImage" alt="" class="h-12 w-12 flex-shrink-0 rounded-md object-cover" />
+        <div v-else class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md border border-slate-700 bg-slate-950 text-slate-400">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5l3-3m-6.75 7.5l-1.5 1.5a3.182 3.182 0 104.5 4.5l3-3a3.182 3.182 0 00-4.5-4.5l-1.5 1.5m9-9l1.5-1.5a3.182 3.182 0 10-4.5-4.5l-3 3a3.182 3.182 0 104.5 4.5l1.5-1.5" />
+          </svg>
         </div>
 
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-gray-100 truncate">{{ link.ogTitle || link.url }}</p>
-          <p class="text-xs text-gray-500 truncate mt-0.5">{{ link.url }}</p>
-          <div class="flex items-center gap-2 mt-2 flex-wrap">
-            <a :href="link.shortUrl" target="_blank" class="text-xs text-indigo-400 hover:underline font-mono">{{ link.shortUrl }}</a>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-slate-100">{{ link.ogTitle || link.url }}</p>
+          <p class="mt-0.5 truncate text-xs text-slate-400">{{ link.url }}</p>
+
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <a :href="link.shortUrl" target="_blank" class="tool-link font-mono text-xs">{{ link.shortUrl }}</a>
             <button
               type="button"
+              :aria-label="`Copy short URL for link ${link.id}`"
+              class="tool-icon-btn h-7 w-7"
               @click="copyUrl(link.shortUrl)"
-              class="text-gray-600 hover:text-gray-300 transition-colors text-xs p-0.5"
-              title="Copy short URL"
-            >📋</button>
-            <span class="text-gray-600">|</span>
-            <a :href="link.longUrl" target="_blank" class="text-xs text-gray-500 hover:underline font-mono truncate max-w-[200px]" :title="link.longUrl">{{ link.longUrl }}</a>
+            >
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+
+            <span class="text-slate-600">|</span>
+
+            <a
+              :href="link.longUrl"
+              target="_blank"
+              :title="link.longUrl"
+              class="max-w-[240px] truncate font-mono text-xs text-slate-400 transition-colors duration-200 hover:text-slate-200"
+            >
+              {{ link.longUrl }}
+            </a>
             <button
               type="button"
+              :aria-label="`Copy long URL for link ${link.id}`"
+              class="tool-icon-btn h-7 w-7"
               @click="copyUrl(link.longUrl)"
-              class="text-gray-600 hover:text-gray-300 transition-colors text-xs p-0.5"
-              title="Copy long URL"
-            >📋</button>
+            >
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
           </div>
         </div>
 
-        <div class="text-right flex-shrink-0">
-          <p class="text-sm font-semibold text-gray-200">{{ link.clickCount ?? 0 }}</p>
-          <p class="text-xs text-gray-500">clicks</p>
+        <div class="text-right">
+          <p class="text-sm font-semibold text-slate-100">{{ link.clickCount ?? 0 }}</p>
+          <p class="text-xs text-slate-400">clicks</p>
         </div>
 
-        <div class="flex flex-col gap-1 flex-shrink-0">
-          <RouterLink :to="`/links/${link.id}/stats`" class="text-xs text-gray-500 hover:text-gray-200 px-2 py-1 rounded hover:bg-gray-700 transition-colors">Stats</RouterLink>
-          <RouterLink :to="`/links/${link.id}/edit`" class="text-xs text-gray-500 hover:text-gray-200 px-2 py-1 rounded hover:bg-gray-700 transition-colors">Edit</RouterLink>
-          <button @click="promptDelete(link)" class="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-900/30 transition-colors">Delete</button>
+        <div class="flex flex-col gap-1.5">
+          <RouterLink :to="`/links/${link.id}/stats`" class="tool-btn-secondary h-8 px-3 text-xs">Stats</RouterLink>
+          <RouterLink :to="`/links/${link.id}/edit`" class="tool-btn-secondary h-8 px-3 text-xs">Edit</RouterLink>
+          <button type="button" class="tool-btn-secondary h-8 px-3 text-xs" @click="promptDelete(link)">Delete</button>
         </div>
       </div>
     </div>
 
-    <!-- Delete Confirmation Dialog -->
     <Teleport to="body">
       <div
         v-if="deleteTarget"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
         @click.self="deleteTarget = null"
       >
-        <div class="w-full max-w-sm bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-6 space-y-4">
-          <div>
-            <h2 class="text-base font-semibold text-white">Delete this link?</h2>
-            <p class="text-sm text-gray-400 mt-1">This cannot be undone.</p>
+        <div class="w-full max-w-sm rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+          <h2 class="tool-heading text-base font-semibold text-slate-100">Delete this link?</h2>
+          <p class="mt-1 text-sm text-slate-400">This action cannot be undone.</p>
+
+          <div class="mt-4 rounded-md border border-slate-800 bg-slate-950 px-3 py-2">
+            <p class="text-xs uppercase tracking-wide text-slate-400">Target URL</p>
+            <p class="mt-1 break-all text-sm text-slate-200">{{ deleteTarget.url }}</p>
           </div>
 
-          <!-- Target URL -->
-          <div class="bg-gray-700/60 rounded-lg px-3 py-2">
-            <p class="text-xs text-gray-500 mb-0.5">Target URL</p>
-            <p class="text-sm text-gray-300 break-all">{{ deleteTarget.url }}</p>
-          </div>
-
-          <div class="flex gap-3 pt-1">
-            <button
-              type="button"
-              @click="deleteTarget = null"
-              class="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium px-4 py-2 rounded-md transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              @click="confirmDelete"
-              :disabled="deleteLoading"
-              class="flex-1 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors disabled:opacity-50"
-            >
+          <div class="mt-5 flex gap-3">
+            <button type="button" class="tool-btn-secondary flex-1" @click="deleteTarget = null">Cancel</button>
+            <button type="button" :disabled="deleteLoading" class="tool-btn-primary flex-1" @click="confirmDelete">
               {{ deleteLoading ? 'Deleting…' : 'Delete' }}
             </button>
           </div>

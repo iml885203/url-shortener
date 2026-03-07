@@ -1,26 +1,37 @@
 <template>
-  <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-    <!-- Image area: 16:9 aspect ratio -->
-    <div class="w-full aspect-video bg-gray-900 flex items-center justify-center overflow-hidden">
+  <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900">
+    <div class="flex aspect-video w-full items-center justify-center overflow-hidden bg-slate-950">
       <img
         v-if="imageUrl && !imgErrored"
         :src="imageUrl"
         alt="OG image preview"
-        class="w-full h-full object-cover"
+        class="h-full w-full object-cover"
         @error="onImgError"
       />
-      <span v-else class="text-5xl opacity-40 select-none">🖼️</span>
+      <svg
+        v-else
+        class="h-10 w-10 text-slate-500"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        aria-hidden="true"
+      >
+        <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+        <circle cx="9" cy="10" r="1.5"></circle>
+        <path stroke-linecap="round" stroke-linejoin="round" d="m21 16-5.5-5.5L7 19"></path>
+      </svg>
     </div>
-    <!-- Text content -->
-    <div class="px-3 py-2.5 space-y-0.5">
-      <p class="text-[11px] text-gray-500 uppercase tracking-wider font-medium">go.dotw.me</p>
-      <p class="text-sm font-bold text-white leading-snug">
+
+    <div class="space-y-1 px-3 py-3">
+      <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">go.dotw.me</p>
+      <p class="text-sm font-semibold leading-snug text-slate-100">
         {{ title || 'Link title will appear here' }}
       </p>
-      <p v-if="description" class="text-xs text-gray-400 leading-relaxed line-clamp-2 pt-0.5">
+      <p v-if="description" class="line-clamp-2 pt-0.5 text-xs leading-relaxed text-slate-400">
         {{ description }}
       </p>
-      <p v-else-if="showDescriptionPlaceholder" class="text-xs text-gray-600 leading-relaxed pt-0.5 italic">
+      <p v-else-if="showDescriptionPlaceholder" class="pt-0.5 text-xs italic leading-relaxed text-slate-500">
         Description will appear here
       </p>
     </div>
@@ -42,7 +53,6 @@ const props = withDefaults(
   }
 );
 
-// Reset error state when imageUrl changes so retries work
 const imgErrored = ref(false);
 watch(() => props.imageUrl, () => {
   imgErrored.value = false;

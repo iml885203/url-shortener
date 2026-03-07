@@ -1,126 +1,102 @@
 <template>
-  <div class="max-w-4xl">
-    <h1 class="text-xl font-semibold mb-6 text-white">Edit Link</h1>
+  <div class="max-w-4xl space-y-5">
+    <h1 class="tool-heading text-xl font-semibold text-slate-100">Edit Link</h1>
 
-    <div v-if="loading" class="text-center py-16 text-gray-500">Loading…</div>
-    <div v-else-if="loadError" class="text-center py-16 text-red-400">{{ loadError }}</div>
+    <div v-if="loading" class="rounded-lg border border-slate-800 bg-slate-900 py-16 text-center text-slate-400">Loading…</div>
+    <div v-else-if="loadError" class="rounded-lg border border-slate-800 bg-slate-900 py-16 text-center text-red-400">{{ loadError }}</div>
 
-    <div v-else class="md:flex md:gap-6 md:items-start">
-      <!-- Form -->
-      <form @submit.prevent="submit" class="flex-1 min-w-0 bg-gray-800 rounded-xl border border-gray-700 shadow-sm p-5 sm:p-6 space-y-5">
-        <!-- Generated URLs display -->
-        <div class="bg-gray-700/50 rounded-lg p-4 space-y-2 text-xs font-mono border border-gray-600">
+    <div v-else class="md:flex md:items-start md:gap-6">
+      <form @submit.prevent="submit" class="tool-panel flex-1 min-w-0 space-y-5 p-5 sm:p-6">
+        <div class="space-y-2 rounded-md border border-slate-800 bg-slate-950 p-4 text-xs font-mono">
           <div class="flex items-center gap-2">
-            <span class="text-gray-400 w-14 flex-shrink-0">Short:</span>
-            <a :href="link!.shortUrl" target="_blank" class="text-indigo-400 hover:underline flex-1 truncate">{{ link!.shortUrl }}</a>
-            <button
-              type="button"
-              @click="copyUrl(link!.shortUrl)"
-              class="text-gray-500 hover:text-gray-200 transition-colors ml-auto flex-shrink-0 p-1"
-              title="Copy short URL"
-            >📋</button>
+            <span class="w-14 flex-shrink-0 text-slate-400">Short:</span>
+            <a :href="link!.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate">{{ link!.shortUrl }}</a>
+            <button type="button" aria-label="Copy short URL" class="tool-icon-btn" @click="copyUrl(link!.shortUrl)">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
           </div>
+
           <div class="flex items-center gap-2">
-            <span class="text-gray-400 w-14 flex-shrink-0">Long:</span>
-            <a :href="link!.longUrl" target="_blank" class="text-gray-400 hover:underline truncate flex-1">{{ link!.longUrl }}</a>
-            <button
-              type="button"
-              @click="copyUrl(link!.longUrl)"
-              class="text-gray-500 hover:text-gray-200 transition-colors ml-auto flex-shrink-0 p-1"
-              title="Copy long URL"
-            >📋</button>
+            <span class="w-14 flex-shrink-0 text-slate-400">Long:</span>
+            <a
+              :href="link!.longUrl"
+              target="_blank"
+              class="min-w-0 flex-1 truncate text-slate-400 transition-colors duration-200 hover:text-slate-200"
+            >
+              {{ link!.longUrl }}
+            </a>
+            <button type="button" aria-label="Copy long URL" class="tool-icon-btn" @click="copyUrl(link!.longUrl)">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
           </div>
         </div>
 
-        <!-- Target URL -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Target URL <span class="text-red-400">*</span></label>
-          <input
-            v-model="form.url"
-            type="url"
-            required
-            class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
+          <label class="mb-1 block text-sm font-medium text-slate-200">Target URL <span class="text-red-400">*</span></label>
+          <input v-model="form.url" type="url" required class="tool-input" />
         </div>
 
-        <!-- OG Toggle -->
-        <label class="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-700/30 px-3 py-2.5">
-          <span class="text-sm font-medium text-gray-200">Use custom OG preview</span>
+        <label class="flex cursor-pointer items-center justify-between rounded-md border border-slate-800 bg-slate-950 px-3 py-2.5">
+          <span class="text-sm font-medium text-slate-200">Use custom OG preview</span>
           <input
             v-model="form.ogEnabled"
             type="checkbox"
-            class="h-4 w-4 rounded border-gray-500 bg-gray-700 text-indigo-500 focus:ring-indigo-500"
+            class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-2 focus:ring-blue-500"
           />
         </label>
 
-        <p v-if="!form.ogEnabled" class="text-sm text-gray-400">
-          Will use destination website preview
-        </p>
+        <p v-if="!form.ogEnabled" class="text-sm text-slate-400">Will use destination website preview</p>
 
         <template v-if="form.ogEnabled">
-          <!-- OG Title -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">OG Title</label>
-            <input
-              v-model="form.ogTitle"
-              type="text"
-              class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
+            <label class="mb-1 block text-sm font-medium text-slate-200">OG Title</label>
+            <input v-model="form.ogTitle" type="text" class="tool-input" />
           </div>
 
-          <!-- OG Description -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">OG Description</label>
-            <textarea
-              v-model="form.ogDesc"
-              rows="2"
-              class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
+            <label class="mb-1 block text-sm font-medium text-slate-200">OG Description</label>
+            <textarea v-model="form.ogDesc" rows="2" class="tool-input" />
           </div>
 
-          <!-- OG Image URL + upload -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">OG Image</label>
-            <input
-              v-model="form.ogImage"
-              type="url"
-              class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent mb-2"
-              placeholder="https://…"
-            />
-            <!-- File upload -->
+            <label class="mb-1 block text-sm font-medium text-slate-200">OG Image</label>
+            <input v-model="form.ogImage" type="url" class="tool-input mb-2" placeholder="https://…" />
+
             <div class="mt-2">
-              <label class="text-xs text-gray-400 font-medium">Upload image:</label>
+              <label class="text-xs font-medium text-slate-400">Upload image:</label>
               <input
                 type="file"
                 accept="image/*"
                 @change="handleFileChange"
-                class="block mt-1 text-xs text-gray-400 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-indigo-900/50 file:text-indigo-300 hover:file:bg-indigo-800/50"
+                class="mt-1 block cursor-pointer text-xs text-slate-400 file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-slate-700 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-200 hover:file:border-blue-500 hover:file:text-blue-400"
               />
             </div>
-            <p v-if="uploadError" class="text-xs text-red-400 mt-1">{{ uploadError }}</p>
-            <p v-if="uploadLoading" class="text-xs text-gray-500 mt-1">Uploading…</p>
+
+            <p v-if="uploadError" class="mt-1 text-xs text-red-400">{{ uploadError }}</p>
+            <p v-if="uploadLoading" class="mt-1 text-xs text-slate-400">Uploading…</p>
           </div>
         </template>
 
         <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
-        <p v-if="saved" class="text-sm text-green-400">✓ Saved</p>
+        <p v-if="saved" class="text-sm text-blue-400">Saved</p>
 
-        <div class="flex flex-col sm:flex-row gap-3 pt-1">
-          <button
-            type="submit"
-            :disabled="saving"
-            class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2 rounded-md disabled:opacity-50 transition-colors"
-          >
+        <div class="flex flex-col gap-3 pt-1 sm:flex-row">
+          <button type="submit" :disabled="saving" class="tool-btn-primary w-full sm:w-auto">
             {{ saving ? 'Saving…' : 'Save' }}
           </button>
-          <RouterLink to="/links" class="w-full sm:w-auto text-center text-sm text-gray-500 hover:text-gray-300 px-4 py-2 transition-colors">← Back</RouterLink>
-          <RouterLink :to="`/links/${link!.id}/stats`" class="w-full sm:w-auto text-center text-sm text-gray-500 hover:text-gray-300 px-4 py-2 sm:ml-auto transition-colors">Stats →</RouterLink>
+          <RouterLink to="/links" class="tool-btn-secondary w-full sm:w-auto">Back to links</RouterLink>
+          <RouterLink :to="`/links/${link!.id}/stats`" class="tool-btn-secondary w-full sm:ml-auto sm:w-auto">View stats</RouterLink>
         </div>
       </form>
 
-      <!-- OG Preview Card -->
-      <div class="w-full md:w-80 lg:w-96 flex-shrink-0 mt-6 md:mt-0">
-        <p class="text-sm font-medium text-gray-400 mb-2">Preview</p>
+      <div class="mt-6 w-full flex-shrink-0 md:mt-0 md:w-80 lg:w-96">
+        <p class="mb-2 text-sm font-medium text-slate-400">Preview</p>
 
         <OgPreviewCard
           :title="cardTitle"
@@ -128,10 +104,8 @@
           :imageUrl="cardImageUrl"
           :showDescriptionPlaceholder="false"
         />
-        <p v-if="!form.ogEnabled" class="text-xs text-gray-500 mt-2">
-          Preview from destination website
-        </p>
-        <p v-if="uploadLoading" class="text-xs text-gray-500 mt-2 text-center">⏳ Uploading image…</p>
+        <p v-if="!form.ogEnabled" class="mt-2 text-xs text-slate-400">Preview from destination website</p>
+        <p v-if="uploadLoading" class="mt-2 text-center text-xs text-slate-400">Uploading image…</p>
       </div>
     </div>
   </div>
@@ -316,7 +290,6 @@ async function handleFileChange(evt: Event) {
   const file = (evt.target as HTMLInputElement).files?.[0];
   if (!file) return;
 
-  // Show local preview immediately before upload completes
   if (localFilePreview.value) URL.revokeObjectURL(localFilePreview.value);
   localFilePreview.value = URL.createObjectURL(file);
 
@@ -325,7 +298,6 @@ async function handleFileChange(evt: Event) {
   try {
     const url = await uploadImage(linkId, file);
     form.value.ogImage = url;
-    // Switch to canonical URL and revoke blob
     URL.revokeObjectURL(localFilePreview.value);
     localFilePreview.value = '';
   } catch (e: unknown) {

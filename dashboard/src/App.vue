@@ -1,29 +1,29 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-slate-100">
+  <div class="tool-shell min-h-screen bg-slate-950 text-slate-100">
     <nav
       v-if="isLoggedIn"
       class="flex items-center gap-4 border-b border-slate-800 bg-slate-900 px-4 py-3 sm:gap-6"
     >
-      <span class="text-lg font-semibold text-slate-100">URL Shortener</span>
-      <RouterLink to="/overview" :class="tabClass('overview')" class="text-sm transition-colors">Overview</RouterLink>
-      <RouterLink to="/links" :class="tabClass('links')" class="text-sm transition-colors">Links</RouterLink>
-      <RouterLink to="/links/new" :class="tabClass('create')" class="text-sm transition-colors">Create</RouterLink>
+      <span class="tool-heading text-lg font-semibold text-slate-100">URL Shortener</span>
+      <RouterLink to="/overview" :class="tabClass('overview')" class="text-sm transition-colors duration-200">Overview</RouterLink>
+      <RouterLink to="/links" :class="tabClass('links')" class="text-sm transition-colors duration-200">Links</RouterLink>
+      <RouterLink to="/links/new" :class="tabClass('create')" class="text-sm transition-colors duration-200">Create</RouterLink>
       <button
         @click="logout"
-        class="ml-auto text-sm text-slate-400 transition-colors hover:text-slate-100"
+        class="ml-auto cursor-pointer text-sm text-slate-400 transition-colors duration-200 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
       >
         Logout
       </button>
     </nav>
+
     <main class="mx-auto max-w-5xl px-4 py-6 sm:py-8">
       <RouterView />
     </main>
 
-    <!-- Toast -->
     <Transition name="toast">
       <div
         v-if="toastVisible"
-        class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-100"
+        class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-md border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-100"
       >
         Copied
       </div>
@@ -53,10 +53,11 @@ function tabClass(tab: 'overview' | 'links' | 'create'): string {
     (tab === 'overview' && path === '/overview') ||
     (tab === 'links' && path.startsWith('/links') && path !== '/links/new') ||
     (tab === 'create' && path === '/links/new');
-  return active ? 'text-blue-400' : 'text-slate-400 hover:text-slate-100';
+  return active
+    ? 'text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900'
+    : 'text-slate-400 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900';
 }
 
-// Global copy toast
 const toastVisible = ref(false);
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
