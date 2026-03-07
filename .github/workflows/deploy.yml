@@ -5,13 +5,28 @@ on:
     branches: [main]
 
 jobs:
-  deploy-redirect:
+  changes:
     runs-on: ubuntu-latest
-    # Only deploy redirect when its code or shared code changes
-    if: >
-      contains(github.event.head_commit.message, 'redirect') ||
-      contains(github.event.head_commit.message, 'shared') ||
-      contains(github.event.head_commit.message, 'deploy-all')
+    outputs:
+      redirect: ${{ steps.filter.outputs.redirect }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            redirect:
+              - 'packages/redirect/**'
+              - 'packages/shared/**'
+            dashboard:
+              - 'packages/dashboard/**'
+              - 'packages/shared/**'
+
+  deploy-redirect:
+    needs: changes
+    if: needs.changes.outputs.redirect == 'true'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,6 +39,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
   deploy-dashboard:
+    needs: changes
+    if: needs.changes.outputs.dashboard == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
