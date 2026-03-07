@@ -98,8 +98,9 @@ export async function handleRedirect(c: Context<{ Bindings: Env }>): Promise<Res
     })()
   );
 
-  // 4. Crawlers get OG HTML, humans get a redirect
-  if (isCrawler(ua)) {
+  // 4. Crawlers with custom OG get HTML, otherwise everyone gets a redirect
+  const hasCustomOg = linkData.ogTitle || linkData.ogDesc || linkData.ogImage;
+  if (isCrawler(ua) && hasCustomOg) {
     const shortUrl = `${c.env.SHORT_BASE_URL}/${slug}`;
     const html = buildOgHtml(targetUrl, linkData, shortUrl);
     return c.html(html, 200);
