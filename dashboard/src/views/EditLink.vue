@@ -2,97 +2,103 @@
   <div class="max-w-4xl space-y-5">
     <h1 class="tool-heading text-xl font-semibold text-slate-100">Edit Link</h1>
 
-    <div v-if="loading" class="rounded-lg border border-slate-800 bg-slate-900 py-16 text-center text-slate-400">Loading…</div>
-    <div v-else-if="loadError" class="rounded-lg border border-slate-800 bg-slate-900 py-16 text-center text-red-400">{{ loadError }}</div>
+    <AppCard v-if="loading" variant="compact" class="py-16 text-center text-slate-400">Loading…</AppCard>
+    <AppCard v-else-if="loadError" variant="compact" class="py-16 text-center text-red-400">{{ loadError }}</AppCard>
 
     <div v-else class="md:flex md:items-start md:gap-6">
-      <form @submit.prevent="submit" class="tool-panel flex-1 min-w-0 space-y-5 p-5 sm:p-6">
-        <div class="space-y-2 rounded-md border border-slate-800 bg-slate-950 p-4 text-xs font-mono">
-          <div class="flex items-center gap-2">
-            <span class="w-14 flex-shrink-0 text-slate-400">Short:</span>
-            <a :href="link!.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate">{{ link!.shortUrl }}</a>
-            <button type="button" aria-label="Copy short URL" class="tool-icon-btn" @click="copyUrl(link!.shortUrl)">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-            </button>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <span class="w-14 flex-shrink-0 text-slate-400">Long:</span>
-            <a
-              :href="link!.longUrl"
-              target="_blank"
-              class="min-w-0 flex-1 truncate text-slate-400 transition-colors duration-200 hover:text-slate-200"
-            >
-              {{ link!.longUrl }}
-            </a>
-            <button type="button" aria-label="Copy long URL" class="tool-icon-btn" @click="copyUrl(link!.longUrl)">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-200">Target URL <span class="text-red-400">*</span></label>
-          <input v-model="form.url" type="url" required class="tool-input" />
-        </div>
-
-        <label class="flex cursor-pointer items-center justify-between rounded-md border border-slate-800 bg-slate-950 px-3 py-2.5">
-          <span class="text-sm font-medium text-slate-200">Use custom OG preview</span>
-          <input
-            v-model="form.ogEnabled"
-            type="checkbox"
-            class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-2 focus:ring-blue-500"
-          />
-        </label>
-
-        <p v-if="!form.ogEnabled" class="text-sm text-slate-400">Will use destination website preview</p>
-
-        <template v-if="form.ogEnabled">
-          <div>
-            <label class="mb-1 block text-sm font-medium text-slate-200">OG Title</label>
-            <input v-model="form.ogTitle" type="text" class="tool-input" />
-          </div>
-
-          <div>
-            <label class="mb-1 block text-sm font-medium text-slate-200">OG Description</label>
-            <textarea v-model="form.ogDesc" rows="2" class="tool-input" />
-          </div>
-
-          <div>
-            <label class="mb-1 block text-sm font-medium text-slate-200">OG Image</label>
-            <input v-model="form.ogImage" type="url" class="tool-input mb-2" placeholder="https://…" />
-
-            <div class="mt-2">
-              <label class="text-xs font-medium text-slate-400">Upload image:</label>
-              <input
-                type="file"
-                accept="image/*"
-                @change="handleFileChange"
-                class="mt-1 block cursor-pointer text-xs text-slate-400 file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-slate-700 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-200 hover:file:border-blue-500 hover:file:text-blue-400"
-              />
+      <form @submit.prevent="submit" class="flex-1 min-w-0">
+        <AppCard class="space-y-5">
+          <AppCard variant="compact" class="space-y-2 bg-slate-950 text-xs font-mono">
+            <div class="flex items-center gap-2">
+              <span class="w-14 flex-shrink-0 text-slate-400">Short:</span>
+              <a :href="link!.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate">{{ link!.shortUrl }}</a>
+              <AppButton type="button" variant="ghost" aria-label="Copy short URL" class="h-9 w-9 px-0" @click="copyUrl(link!.shortUrl)">
+                <template #icon>
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </template>
+              </AppButton>
             </div>
 
-            <p v-if="uploadError" class="mt-1 text-xs text-red-400">{{ uploadError }}</p>
-            <p v-if="uploadLoading" class="mt-1 text-xs text-slate-400">Uploading…</p>
+            <div class="flex items-center gap-2">
+              <span class="w-14 flex-shrink-0 text-slate-400">Long:</span>
+              <a
+                :href="link!.longUrl"
+                target="_blank"
+                class="min-w-0 flex-1 truncate text-slate-400 transition-colors duration-200 hover:text-slate-200"
+              >
+                {{ link!.longUrl }}
+              </a>
+              <AppButton type="button" variant="ghost" aria-label="Copy long URL" class="h-9 w-9 px-0" @click="copyUrl(link!.longUrl)">
+                <template #icon>
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </template>
+              </AppButton>
+            </div>
+          </AppCard>
+
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-200">Target URL <span class="text-red-400">*</span></label>
+            <input v-model="form.url" type="url" required class="app-input" />
           </div>
-        </template>
 
-        <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
-        <p v-if="saved" class="text-sm text-blue-400">Saved</p>
+          <label class="flex cursor-pointer items-center justify-between rounded-md border border-slate-800 bg-slate-950 px-3 py-2.5">
+            <span class="text-sm font-medium text-slate-200">Use custom OG preview</span>
+            <input
+              v-model="form.ogEnabled"
+              type="checkbox"
+              class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-2 focus:ring-blue-500"
+            />
+          </label>
 
-        <div class="flex flex-col gap-3 pt-1 sm:flex-row">
-          <button type="submit" :disabled="saving" class="tool-btn-primary w-full sm:w-auto">
-            {{ saving ? 'Saving…' : 'Save' }}
-          </button>
-          <RouterLink to="/links" class="tool-btn-secondary w-full sm:w-auto">Back to links</RouterLink>
-          <RouterLink :to="`/links/${link!.id}/stats`" class="tool-btn-secondary w-full sm:ml-auto sm:w-auto">View stats</RouterLink>
-        </div>
+          <p v-if="!form.ogEnabled" class="text-sm text-slate-400">Will use destination website preview</p>
+
+          <template v-if="form.ogEnabled">
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-200">OG Title</label>
+              <input v-model="form.ogTitle" type="text" class="app-input" />
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-200">OG Description</label>
+              <textarea v-model="form.ogDesc" rows="2" class="app-input" />
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-200">OG Image</label>
+              <input v-model="form.ogImage" type="url" class="app-input mb-2" placeholder="https://…" />
+
+              <div class="mt-2">
+                <label class="text-xs font-medium text-slate-400">Upload image:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  @change="handleFileChange"
+                  class="mt-1 block cursor-pointer text-xs text-slate-400 file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-slate-700 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-200 hover:file:border-blue-500 hover:file:text-blue-400"
+                />
+              </div>
+
+              <p v-if="uploadError" class="mt-1 text-xs text-red-400">{{ uploadError }}</p>
+              <p v-if="uploadLoading" class="mt-1 text-xs text-slate-400">Uploading…</p>
+            </div>
+          </template>
+
+          <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+          <p v-if="saved" class="text-sm text-blue-400">Saved</p>
+
+          <div class="flex flex-col gap-3 pt-1 sm:flex-row">
+            <AppButton type="submit" :disabled="saving" variant="primary" class="w-full sm:w-auto">
+              {{ saving ? 'Saving…' : 'Save' }}
+            </AppButton>
+            <AppButton to="/links" variant="secondary" class="w-full sm:w-auto">Back to links</AppButton>
+            <AppButton :to="`/links/${link!.id}/stats`" variant="secondary" class="w-full sm:ml-auto sm:w-auto">View stats</AppButton>
+          </div>
+        </AppCard>
       </form>
 
       <div class="mt-6 w-full flex-shrink-0 md:mt-0 md:w-80 lg:w-96">
@@ -116,6 +122,8 @@ import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { fetchDestinationOgPreview, listLinks, updateLink, uploadImage, type DestinationOgPreview, type Link } from '@/api/client';
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
+import AppButton from '@/components/ui/AppButton.vue';
+import AppCard from '@/components/ui/AppCard.vue';
 
 const DEFAULT_OG_IMAGE = 'https://go.dotw.me/assets/og-default.png';
 const PREVIEW_UNAVAILABLE_DESC = 'Preview unavailable';

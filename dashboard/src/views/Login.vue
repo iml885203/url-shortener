@@ -377,4 +377,11 @@ async function submit() {
     margin-bottom: 24px;
   }
 }
+
+/* iOS Safari: prevent focus zoom on password/input controls */
+@media (max-width: 768px) {
+  .pixel-input {
+    font-size: 16px;
+  }
+}
 </style>

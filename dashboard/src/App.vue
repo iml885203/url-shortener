@@ -5,15 +5,10 @@
       class="flex items-center gap-4 border-b border-slate-800 bg-slate-900 px-4 py-3 sm:gap-6"
     >
       <span class="tool-heading text-lg font-semibold text-slate-100">URL Shortener</span>
-      <RouterLink to="/overview" :class="tabClass('overview')" class="text-sm transition-colors duration-200">Overview</RouterLink>
-      <RouterLink to="/links" :class="tabClass('links')" class="text-sm transition-colors duration-200">Links</RouterLink>
-      <RouterLink to="/links/new" :class="tabClass('create')" class="text-sm transition-colors duration-200">Create</RouterLink>
-      <button
-        @click="logout"
-        class="ml-auto cursor-pointer text-sm text-slate-400 transition-colors duration-200 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-      >
-        Logout
-      </button>
+      <AppButton to="/overview" :variant="tabVariant('overview')" class="h-9 px-3">Overview</AppButton>
+      <AppButton to="/links" :variant="tabVariant('links')" class="h-9 px-3">Links</AppButton>
+      <AppButton to="/links/new" :variant="tabVariant('create')" class="h-9 px-3">Create</AppButton>
+      <AppButton variant="ghost" class="ml-auto h-9 px-3" @click="logout">Logout</AppButton>
     </nav>
 
     <main class="mx-auto max-w-5xl px-4 py-6 sm:py-8">
@@ -34,6 +29,7 @@
 <script setup lang="ts">
 import { computed, ref, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import AppButton from '@/components/ui/AppButton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -47,15 +43,13 @@ function logout() {
   router.push('/login');
 }
 
-function tabClass(tab: 'overview' | 'links' | 'create'): string {
+function tabVariant(tab: 'overview' | 'links' | 'create'): 'secondary' | 'ghost' {
   const path = route.path;
   const active =
     (tab === 'overview' && path === '/overview') ||
     (tab === 'links' && path.startsWith('/links') && path !== '/links/new') ||
     (tab === 'create' && path === '/links/new');
-  return active
-    ? 'text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900'
-    : 'text-slate-400 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900';
+  return active ? 'secondary' : 'ghost';
 }
 
 const toastVisible = ref(false);

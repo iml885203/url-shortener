@@ -1,15 +1,15 @@
 <template>
   <div class="max-w-3xl space-y-6">
     <div class="flex flex-wrap items-center gap-3">
-      <RouterLink to="/links" class="tool-btn-secondary h-9 px-3 text-xs">Back to links</RouterLink>
+      <AppButton to="/links" variant="secondary">Back to links</AppButton>
       <h1 class="tool-heading text-xl font-semibold text-slate-100">Click Stats</h1>
     </div>
 
-    <div v-if="loading" class="rounded-lg border border-slate-800 bg-slate-900 py-16 text-center text-slate-400">Loading…</div>
-    <div v-else-if="error" class="rounded-lg border border-slate-800 bg-slate-900 py-16 text-center text-red-400">{{ error }}</div>
+    <AppCard v-if="loading" variant="compact" class="py-16 text-center text-slate-400">Loading…</AppCard>
+    <AppCard v-else-if="error" variant="compact" class="py-16 text-center text-red-400">{{ error }}</AppCard>
 
     <div v-else class="space-y-6">
-      <section class="tool-panel p-5">
+      <AppCard variant="compact">
         <h2 class="tool-heading mb-4 text-sm font-semibold text-slate-200">Clicks by Day (last 30)</h2>
         <div v-if="stats!.byDay.length === 0" class="text-sm text-slate-400">No data yet</div>
         <div v-else class="space-y-2">
@@ -24,10 +24,10 @@
             <span class="w-8 text-right text-xs font-medium text-slate-200">{{ row.count }}</span>
           </div>
         </div>
-      </section>
+      </AppCard>
 
       <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <section class="tool-panel p-5">
+        <AppCard variant="compact">
           <h2 class="tool-heading mb-4 text-sm font-semibold text-slate-200">Top Referrers</h2>
           <div v-if="stats!.byReferrer.length === 0" class="text-sm text-slate-400">No data</div>
           <div v-else class="space-y-2">
@@ -36,9 +36,9 @@
               <span class="flex-shrink-0 text-xs font-medium text-slate-200">{{ row.count }}</span>
             </div>
           </div>
-        </section>
+        </AppCard>
 
-        <section class="tool-panel p-5">
+        <AppCard variant="compact">
           <h2 class="tool-heading mb-4 text-sm font-semibold text-slate-200">Top Countries</h2>
           <div v-if="stats!.byCountry.length === 0" class="text-sm text-slate-400">No data</div>
           <div v-else class="space-y-2">
@@ -47,7 +47,7 @@
               <span class="flex-shrink-0 text-xs font-medium text-slate-200">{{ row.count }}</span>
             </div>
           </div>
-        </section>
+        </AppCard>
       </div>
 
       <div>
@@ -61,6 +61,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getLinkStats, type Stats } from '@/api/client';
+import AppButton from '@/components/ui/AppButton.vue';
+import AppCard from '@/components/ui/AppCard.vue';
 
 const route = useRoute();
 const linkId = Number(route.params.id);

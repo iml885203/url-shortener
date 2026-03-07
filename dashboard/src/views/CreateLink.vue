@@ -3,71 +3,73 @@
     <h1 class="tool-heading text-xl font-semibold text-slate-100">New Link</h1>
 
     <div class="md:flex md:items-start md:gap-6">
-      <form @submit.prevent="submit" class="tool-panel flex-1 min-w-0 space-y-5 p-5 sm:p-6">
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-200">Target URL <span class="text-red-400">*</span></label>
-          <input
-            v-model="form.url"
-            type="url"
-            required
-            class="tool-input"
-            placeholder="https://example.com/article"
-          />
-        </div>
-
-        <label class="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950 px-3 py-2.5 cursor-pointer">
-          <span class="text-sm font-medium text-slate-200">Use custom OG preview</span>
-          <input
-            v-model="form.ogEnabled"
-            type="checkbox"
-            class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-2 focus:ring-blue-500"
-          />
-        </label>
-
-        <p v-if="!form.ogEnabled" class="text-sm text-slate-400">Will use destination website preview</p>
-
-        <template v-if="form.ogEnabled">
+      <form @submit.prevent="submit" class="flex-1 min-w-0">
+        <AppCard class="space-y-5">
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-200">OG Title</label>
+            <label class="mb-1 block text-sm font-medium text-slate-200">Target URL <span class="text-red-400">*</span></label>
             <input
-              v-model="form.ogTitle"
-              type="text"
-              class="tool-input"
-              placeholder="Article title for social preview"
-            />
-          </div>
-
-          <div>
-            <label class="mb-1 block text-sm font-medium text-slate-200">OG Description</label>
-            <textarea
-              v-model="form.ogDesc"
-              rows="2"
-              class="tool-input"
-              placeholder="Description shown in social previews"
-            />
-          </div>
-
-          <div>
-            <label class="mb-1 block text-sm font-medium text-slate-200">OG Image URL</label>
-            <input
-              v-model="form.ogImage"
+              v-model="form.url"
               type="url"
-              class="tool-input"
-              placeholder="https://… (or upload after creating)"
+              required
+              class="app-input"
+              placeholder="https://example.com/article"
             />
           </div>
 
-          <p class="text-xs text-slate-400">To upload an OG image, create the link first, then edit it to upload.</p>
-        </template>
+          <label class="flex cursor-pointer items-center justify-between rounded-md border border-slate-800 bg-slate-950 px-3 py-2.5">
+            <span class="text-sm font-medium text-slate-200">Use custom OG preview</span>
+            <input
+              v-model="form.ogEnabled"
+              type="checkbox"
+              class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-2 focus:ring-blue-500"
+            />
+          </label>
 
-        <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+          <p v-if="!form.ogEnabled" class="text-sm text-slate-400">Will use destination website preview</p>
 
-        <div class="flex flex-col gap-3 pt-1 sm:flex-row">
-          <button type="submit" :disabled="loading" class="tool-btn-primary w-full sm:w-auto">
-            {{ loading ? 'Creating…' : 'Create Link' }}
-          </button>
-          <RouterLink to="/links" class="tool-btn-secondary w-full sm:w-auto">Cancel</RouterLink>
-        </div>
+          <template v-if="form.ogEnabled">
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-200">OG Title</label>
+              <input
+                v-model="form.ogTitle"
+                type="text"
+                class="app-input"
+                placeholder="Article title for social preview"
+              />
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-200">OG Description</label>
+              <textarea
+                v-model="form.ogDesc"
+                rows="2"
+                class="app-input"
+                placeholder="Description shown in social previews"
+              />
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-200">OG Image URL</label>
+              <input
+                v-model="form.ogImage"
+                type="url"
+                class="app-input"
+                placeholder="https://… (or upload after creating)"
+              />
+            </div>
+
+            <p class="text-xs text-slate-400">To upload an OG image, create the link first, then edit it to upload.</p>
+          </template>
+
+          <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+
+          <div class="flex flex-col gap-3 pt-1 sm:flex-row">
+            <AppButton type="submit" :disabled="loading" variant="primary" class="w-full sm:w-auto">
+              {{ loading ? 'Creating…' : 'Create Link' }}
+            </AppButton>
+            <AppButton to="/links" variant="secondary" class="w-full sm:w-auto">Cancel</AppButton>
+          </div>
+        </AppCard>
       </form>
 
       <div class="mt-6 w-full flex-shrink-0 md:mt-0 md:w-80 lg:w-96">
@@ -87,7 +89,7 @@
         v-if="createdLink"
         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
       >
-        <div class="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+        <AppCard variant="elevated" class="w-full max-w-md">
           <div class="text-center">
             <svg
               class="mx-auto mb-2 h-8 w-8 text-blue-400"
@@ -107,53 +109,63 @@
           <div class="mt-5 space-y-4">
             <div>
               <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Short URL</p>
-              <div class="flex items-center gap-2 rounded-md border border-slate-800 bg-slate-950 px-3 py-2">
-                <a :href="createdLink.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-sm">{{ createdLink.shortUrl }}</a>
-                <button
-                  type="button"
-                  aria-label="Copy short URL"
-                  class="tool-icon-btn"
-                  @click="copyUrl(createdLink.shortUrl)"
-                >
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                </button>
-              </div>
+              <AppCard variant="compact" class="bg-slate-950 px-3 py-2">
+                <div class="flex items-center gap-2">
+                  <a :href="createdLink.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-sm">{{ createdLink.shortUrl }}</a>
+                  <AppButton
+                    type="button"
+                    variant="ghost"
+                    aria-label="Copy short URL"
+                    class="h-9 w-9 px-0"
+                    @click="copyUrl(createdLink.shortUrl)"
+                  >
+                    <template #icon>
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                    </template>
+                  </AppButton>
+                </div>
+              </AppCard>
             </div>
 
             <div>
               <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Long URL</p>
-              <div class="flex items-center gap-2 rounded-md border border-slate-800 bg-slate-950 px-3 py-2">
-                <a
-                  :href="createdLink.longUrl"
-                  target="_blank"
-                  :title="createdLink.longUrl"
-                  class="min-w-0 flex-1 truncate font-mono text-sm text-slate-300 transition-colors duration-200 hover:text-slate-100"
-                >
-                  {{ createdLink.longUrl }}
-                </a>
-                <button
-                  type="button"
-                  aria-label="Copy long URL"
-                  class="tool-icon-btn"
-                  @click="copyUrl(createdLink.longUrl)"
-                >
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                </button>
-              </div>
+              <AppCard variant="compact" class="bg-slate-950 px-3 py-2">
+                <div class="flex items-center gap-2">
+                  <a
+                    :href="createdLink.longUrl"
+                    target="_blank"
+                    :title="createdLink.longUrl"
+                    class="min-w-0 flex-1 truncate font-mono text-sm text-slate-300 transition-colors duration-200 hover:text-slate-100"
+                  >
+                    {{ createdLink.longUrl }}
+                  </a>
+                  <AppButton
+                    type="button"
+                    variant="ghost"
+                    aria-label="Copy long URL"
+                    class="h-9 w-9 px-0"
+                    @click="copyUrl(createdLink.longUrl)"
+                  >
+                    <template #icon>
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                    </template>
+                  </AppButton>
+                </div>
+              </AppCard>
             </div>
           </div>
 
           <div class="mt-5 flex flex-col gap-3 pt-1 sm:flex-row">
-            <button type="button" @click="createAnother" class="tool-btn-primary flex-1">Create Another</button>
-            <RouterLink to="/links" class="tool-btn-secondary flex-1">Back to List</RouterLink>
+            <AppButton type="button" @click="createAnother" variant="primary" class="flex-1">Create Another</AppButton>
+            <AppButton to="/links" variant="secondary" class="flex-1">Back to List</AppButton>
           </div>
-        </div>
+        </AppCard>
       </div>
     </Teleport>
   </div>
@@ -163,6 +175,8 @@
 import { computed, inject, onBeforeUnmount, ref, watch } from 'vue';
 import { createLink, fetchDestinationOgPreview, type DestinationOgPreview, type Link } from '@/api/client';
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
+import AppButton from '@/components/ui/AppButton.vue';
+import AppCard from '@/components/ui/AppCard.vue';
 
 const DEFAULT_OG_IMAGE = 'https://go.dotw.me/assets/og-default.png';
 const PREVIEW_UNAVAILABLE_DESC = 'Preview unavailable';
