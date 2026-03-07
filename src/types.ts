@@ -10,6 +10,7 @@ export interface Env {
   // Environment variables
   API_KEY: string;
   SHORT_BASE_URL: string;
+  R2_BASE_URL: string;
 }
 
 export interface LinkRecord {

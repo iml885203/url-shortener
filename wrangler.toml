@@ -24,5 +24,6 @@ bucket_name = "url-shortener-images"
 
 [vars]
 SHORT_BASE_URL = "https://go.logan.tw"
+R2_BASE_URL = "https://r2.go.logan.tw"
 
 # Set secrets via: wrangler secret put API_KEY

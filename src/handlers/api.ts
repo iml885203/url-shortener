@@ -3,7 +3,7 @@ import { Env } from '../types';
 import { isAuthenticated } from '../utils/auth';
 import { encodeId as sqidsEncode } from '../codec/sqids';
 import { encodeId as loganEncode } from '../codec/logan';
-import { kvGet, kvSet, kvDelete } from '../services/kv';
+import { kvSet, kvDelete } from '../services/kv';
 import {
   dbListLinks,
   dbGetLink,
@@ -15,8 +15,6 @@ import {
   dbGetClicksByCountry,
 } from '../services/db';
 import { r2Upload, r2Delete, r2KeyFromUrl } from '../services/r2';
-
-const R2_BASE_URL = 'https://r2.go.logan.tw';
 
 function authGuard(c: Context<{ Bindings: Env }>): Response | null {
   if (!isAuthenticated(c)) {
@@ -108,7 +106,7 @@ export async function updateLink(c: Context<{ Bindings: Env }>): Promise<Respons
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const id = parseInt(c.req.param('id'), 10);
+  const id = parseInt(c.req.param('id') ?? '', 10);
   if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
 
   let body: { url?: string; ogTitle?: string | null; ogDesc?: string | null; ogImage?: string | null };
@@ -153,13 +151,15 @@ export async function deleteLink(c: Context<{ Bindings: Env }>): Promise<Respons
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const id = parseInt(c.req.param('id'), 10);
+  const id = parseInt(c.req.param('id') ?? '', 10);
   if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+
+  const r2BaseUrl = c.env.R2_BASE_URL;
 
   // Check if there's an OG image to clean up from R2
   const link = await dbGetLink(c.env.DB, id);
   if (link?.og_image) {
-    const key = r2KeyFromUrl(link.og_image, R2_BASE_URL);
+    const key = r2KeyFromUrl(link.og_image, r2BaseUrl);
     if (key) {
       await r2Delete(c.env.R2, key).catch(() => {});
     }
@@ -181,7 +181,7 @@ export async function getLinkStats(c: Context<{ Bindings: Env }>): Promise<Respo
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const id = parseInt(c.req.param('id'), 10);
+  const id = parseInt(c.req.param('id') ?? '', 10);
   if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
 
   const link = await dbGetLink(c.env.DB, id);
@@ -204,6 +204,8 @@ export async function uploadImage(c: Context<{ Bindings: Env }>): Promise<Respon
   const denied = authGuard(c);
   if (denied) return denied;
 
+  const r2BaseUrl = c.env.R2_BASE_URL;
+
   const formData = await c.req.formData().catch(() => null);
   if (!formData) return c.json({ error: 'Invalid form data' }, 400);
 
@@ -221,7 +223,7 @@ export async function uploadImage(c: Context<{ Bindings: Env }>): Promise<Respon
   const key = `${prefix}/${Date.now()}.${ext}`;
 
   const buffer = await file.arrayBuffer();
-  const url = await r2Upload(c.env.R2, key, buffer, file.type, R2_BASE_URL);
+  const url = await r2Upload(c.env.R2, key, buffer, file.type, r2BaseUrl);
 
   return c.json({ url });
 }

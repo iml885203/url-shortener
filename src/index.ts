@@ -30,12 +30,19 @@ app.delete('/api/links/:id', deleteLink);
 app.get('/api/links/:id/stats', getLinkStats);
 app.post('/api/upload', uploadImage);
 
-// Dashboard — redirect root and serve SPA via static assets
-// Static files in dashboard/dist/ are served by Cloudflare Pages/Workers assets binding
-// The Worker itself only needs to handle the /dashboard/ rewrite for deep links.
-
 // Root redirects to dashboard
 app.get('/', (c) => c.redirect('/dashboard/'));
+
+// Dashboard SPA — serve index.html for deep links (Vue Router history mode)
+app.get('/dashboard/*', async (c) => {
+  const assetsFetcher = c.env.ASSETS;
+  // Always serve index.html for SPA deep links
+  const res = await assetsFetcher.fetch(new Request(new URL('/index.html', c.req.url)));
+  return new Response(res.body, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
+});
 
 // Redirect handler (must be last — handles short/long URL slugs)
 app.get('/:slug', handleRedirect);

@@ -4,7 +4,7 @@ import { LOGAN_PATTERN, decodeSlug as loganDecode } from '../codec/logan';
 import { decodeSlug as sqidsDecode } from '../codec/sqids';
 import { isCrawler } from '../utils/crawler';
 import { sha256Hex } from '../utils/hash';
-import { kvGet } from '../services/kv';
+import { kvGet, kvSet } from '../services/kv';
 import { dbGetLink, dbLogClick } from '../services/db';
 
 /**
@@ -42,7 +42,9 @@ function buildOgHtml(targetUrl: string, data: KVLinkData, shortUrl: string): str
  * Main redirect handler for GET /:slug
  */
 export async function handleRedirect(c: Context<{ Bindings: Env }>): Promise<Response> {
-  const slug = c.req.param('slug');
+  const rawSlug = c.req.param('slug') ?? '';
+  // Decode percent-encoded Unicode characters (e.g. logan encoding o variants)
+  const slug = decodeURIComponent(rawSlug);
 
   // 1. Decode slug to ID
   let id: number | null = null;
@@ -68,6 +70,10 @@ export async function handleRedirect(c: Context<{ Bindings: Env }>): Promise<Res
       ogDesc: record.og_desc,
       ogImage: record.og_image,
     };
+    // Backfill KV cache on D1 hit
+    c.executionCtx.waitUntil(
+      kvSet(c.env.KV, id, linkData)
+    );
   }
 
   const targetUrl = linkData.url;
@@ -75,7 +81,8 @@ export async function handleRedirect(c: Context<{ Bindings: Env }>): Promise<Res
   // 3. Log click asynchronously
   const ua = c.req.header('User-Agent') ?? null;
   const referrer = c.req.header('Referer') ?? null;
-  const country = (c.req.raw as Request & { cf?: { country?: string } }).cf?.country ?? null;
+  const cfData = (c.req.raw as unknown as { cf?: { country?: string } }).cf;
+  const country = cfData?.country ?? null;
   const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? null;
 
   c.executionCtx.waitUntil(
