@@ -100,10 +100,14 @@
                   @change="handleFileChange"
                   class="mt-1 block cursor-pointer text-xs text-slate-400 file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-slate-700 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-200 hover:file:border-blue-500 hover:file:text-blue-400"
                 />
+                <p class="mt-1 text-xs text-slate-500">
+                  System auto-optimizes OG images to 1200×630. Max upload 1MB, optimized target ~600KB.
+                </p>
               </div>
 
               <p v-if="uploadError" class="mt-1 text-xs text-red-400">{{ uploadError }}</p>
               <p v-if="uploadLoading" class="mt-1 text-xs text-slate-400">Uploading…</p>
+              <p v-if="uploadSuccess" class="mt-1 text-xs text-blue-400">Optimized and uploaded.</p>
             </div>
           </template>
 
@@ -178,6 +182,7 @@ const error = ref('');
 const saved = ref(false);
 const uploadLoading = ref(false);
 const uploadError = ref('');
+const uploadSuccess = ref(false);
 const localFilePreview = ref('');
 const destinationPreview = ref<DestinationOgPreview | null>(null);
 const destinationPreviewLoading = ref(false);
@@ -352,10 +357,15 @@ async function handleFileChange(evt: Event) {
   localFilePreview.value = URL.createObjectURL(file);
 
   uploadError.value = '';
+  uploadSuccess.value = false;
   uploadLoading.value = true;
   try {
     const url = await uploadImage(linkId, file);
     form.value.ogImage = url;
+    uploadSuccess.value = true;
+    setTimeout(() => {
+      uploadSuccess.value = false;
+    }, 2500);
     URL.revokeObjectURL(localFilePreview.value);
     localFilePreview.value = '';
   } catch (e: unknown) {
