@@ -78,18 +78,83 @@
         />
       </div>
     </div>
+
+    <!-- Success Modal -->
+    <Teleport to="body">
+      <div
+        v-if="createdLink"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm"
+      >
+        <div class="w-full max-w-md bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-6 space-y-5">
+          <!-- Header -->
+          <div class="text-center">
+            <p class="text-2xl mb-1">✅</p>
+            <h2 class="text-lg font-semibold text-white">Link Created!</h2>
+            <p class="text-sm text-gray-400 mt-1 break-all">{{ createdLink.url }}</p>
+          </div>
+
+          <!-- Short URL -->
+          <div>
+            <p class="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Short URL</p>
+            <div class="flex items-center gap-2 bg-gray-700 rounded-lg px-3 py-2">
+              <a :href="createdLink.shortUrl" target="_blank" class="flex-1 text-sm text-indigo-400 hover:underline font-mono truncate">{{ createdLink.shortUrl }}</a>
+              <button
+                type="button"
+                @click="copyUrl(createdLink.shortUrl)"
+                class="text-gray-400 hover:text-white transition-colors flex-shrink-0 text-base"
+                title="Copy short URL"
+              >📋</button>
+            </div>
+          </div>
+
+          <!-- Long URL -->
+          <div>
+            <p class="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Long URL</p>
+            <div class="flex items-center gap-2 bg-gray-700 rounded-lg px-3 py-2">
+              <a :href="createdLink.longUrl" target="_blank" class="flex-1 text-sm text-gray-300 hover:underline font-mono truncate" :title="createdLink.longUrl">{{ createdLink.longUrl }}</a>
+              <button
+                type="button"
+                @click="copyUrl(createdLink.longUrl)"
+                class="text-gray-400 hover:text-white transition-colors flex-shrink-0 text-base"
+                title="Copy long URL"
+              >📋</button>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-col sm:flex-row gap-3 pt-1">
+            <button
+              type="button"
+              @click="createAnother"
+              class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
+            >
+              Create Another
+            </button>
+            <RouterLink
+              to="/links"
+              class="flex-1 text-center bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium px-4 py-2 rounded-md transition-colors"
+            >
+              Back to List
+            </RouterLink>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { useRouter } from 'vue-router';
-import { createLink } from '@/api/client';
+import { createLink, type Link } from '@/api/client';
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
 
 const router = useRouter();
 const loading = ref(false);
 const error = ref('');
+const createdLink = ref<Link | null>(null);
+
+const showCopyToast = inject<() => void>('showCopyToast', () => {});
 
 const form = ref({
   url: '',
@@ -108,11 +173,21 @@ async function submit() {
       ogDesc: form.value.ogDesc || undefined,
       ogImage: form.value.ogImage || undefined,
     });
-    router.push(`/links/${link.id}/edit`);
+    createdLink.value = link;
   } catch (e: unknown) {
     error.value = (e as Error).message;
   } finally {
     loading.value = false;
   }
+}
+
+function createAnother() {
+  createdLink.value = null;
+  form.value = { url: '', ogTitle: '', ogDesc: '', ogImage: '' };
+  error.value = '';
+}
+
+function copyUrl(text: string) {
+  navigator.clipboard.writeText(text).then(() => showCopyToast()).catch(() => {});
 }
 </script>

@@ -72,7 +72,7 @@
         <div class="flex gap-2 pt-1">
           <RouterLink :to="`/links/${link.id}/stats`" class="flex-1 text-center text-xs text-gray-400 hover:text-white px-2 py-1.5 rounded bg-gray-700 hover:bg-gray-600 transition-colors">Stats</RouterLink>
           <RouterLink :to="`/links/${link.id}/edit`" class="flex-1 text-center text-xs text-gray-400 hover:text-white px-2 py-1.5 rounded bg-gray-700 hover:bg-gray-600 transition-colors">Edit</RouterLink>
-          <button @click="remove(link.id)" class="flex-1 text-xs text-red-400 hover:text-red-300 px-2 py-1.5 rounded bg-gray-700 hover:bg-red-900/30 transition-colors">Delete</button>
+          <button @click="promptDelete(link)" class="flex-1 text-xs text-red-400 hover:text-red-300 px-2 py-1.5 rounded bg-gray-700 hover:bg-red-900/30 transition-colors">Delete</button>
         </div>
       </div>
     </div>
@@ -121,10 +121,50 @@
         <div class="flex flex-col gap-1 flex-shrink-0">
           <RouterLink :to="`/links/${link.id}/stats`" class="text-xs text-gray-500 hover:text-gray-200 px-2 py-1 rounded hover:bg-gray-700 transition-colors">Stats</RouterLink>
           <RouterLink :to="`/links/${link.id}/edit`" class="text-xs text-gray-500 hover:text-gray-200 px-2 py-1 rounded hover:bg-gray-700 transition-colors">Edit</RouterLink>
-          <button @click="remove(link.id)" class="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-900/30 transition-colors">Delete</button>
+          <button @click="promptDelete(link)" class="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-900/30 transition-colors">Delete</button>
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <Teleport to="body">
+      <div
+        v-if="deleteTarget"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm"
+        @click.self="deleteTarget = null"
+      >
+        <div class="w-full max-w-sm bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-6 space-y-4">
+          <div>
+            <h2 class="text-base font-semibold text-white">Delete this link?</h2>
+            <p class="text-sm text-gray-400 mt-1">This cannot be undone.</p>
+          </div>
+
+          <!-- Target URL -->
+          <div class="bg-gray-700/60 rounded-lg px-3 py-2">
+            <p class="text-xs text-gray-500 mb-0.5">Target URL</p>
+            <p class="text-sm text-gray-300 break-all">{{ deleteTarget.url }}</p>
+          </div>
+
+          <div class="flex gap-3 pt-1">
+            <button
+              type="button"
+              @click="deleteTarget = null"
+              class="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium px-4 py-2 rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="confirmDelete"
+              :disabled="deleteLoading"
+              class="flex-1 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors disabled:opacity-50"
+            >
+              {{ deleteLoading ? 'Deleting…' : 'Delete' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -135,6 +175,8 @@ import { listLinks, deleteLink, type Link } from '@/api/client';
 const links = ref<Link[]>([]);
 const loading = ref(true);
 const error = ref('');
+const deleteTarget = ref<Link | null>(null);
+const deleteLoading = ref(false);
 
 const showCopyToast = inject<() => void>('showCopyToast', () => {});
 
@@ -152,13 +194,21 @@ async function load() {
   }
 }
 
-async function remove(id: number) {
-  if (!confirm('Delete this link?')) return;
+function promptDelete(link: Link) {
+  deleteTarget.value = link;
+}
+
+async function confirmDelete() {
+  if (!deleteTarget.value) return;
+  deleteLoading.value = true;
   try {
-    await deleteLink(id);
-    links.value = links.value.filter((l) => l.id !== id);
+    await deleteLink(deleteTarget.value.id);
+    links.value = links.value.filter((l) => l.id !== deleteTarget.value!.id);
+    deleteTarget.value = null;
   } catch (e: unknown) {
     alert((e as Error).message);
+  } finally {
+    deleteLoading.value = false;
   }
 }
 
