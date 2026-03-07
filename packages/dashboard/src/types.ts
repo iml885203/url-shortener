@@ -54,3 +54,8 @@ export interface OverviewStats {
   topLinks: OverviewTopLinkRow[];
   clicksByDay: DayStats[];
 }
+
+export interface LinksPageResult {
+  items: LinkWithStats[];
+  total: number;
+}

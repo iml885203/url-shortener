@@ -10,10 +10,14 @@
   },
   "dependencies": {
     "@url-shortener/shared": "*",
-    "hono": "^4.12.5"
+    "fast-png": "^8.0.0",
+    "hono": "^4.12.5",
+    "oled-font-5x7": "^1.0.3",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260307.1",
+    "@types/qrcode": "^1.5.6",
     "typescript": "^5.9.3",
     "wrangler": "^4.71.0"
   }

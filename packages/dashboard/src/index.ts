@@ -3,10 +3,13 @@ import { cors } from 'hono/cors';
 import { DashboardEnv } from './types.js';
 import {
   listLinks,
+  getLink,
   createLink,
   updateLink,
   deleteLink,
   getLinkStats,
+  getLinkShare,
+  getLinkQr,
   fetchOgPreview,
   uploadImage,
   getMe,
@@ -25,6 +28,9 @@ app.use('/api/*', cors({
 // Admin API routes
 app.get('/api/me', getMe);
 app.get('/api/links', listLinks);
+app.get('/api/links/:id', getLink);
+app.get('/api/links/:id/share', getLinkShare);
+app.get('/api/links/:id/qr', getLinkQr);
 app.post('/api/links', createLink);
 app.put('/api/links/:id', updateLink);
 app.delete('/api/links/:id', deleteLink);

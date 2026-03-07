@@ -6,6 +6,7 @@ import {
   CountryStats,
   OverviewStats,
   OverviewTopLinkRow,
+  LinksPageResult,
 } from '../types.js';
 
 function formatUtcDate(date: Date): string {
@@ -47,6 +48,65 @@ export async function dbListLinks(db: D1Database): Promise<LinkWithStats[]> {
     )
     .all<LinkWithStats>();
   return result.results ?? [];
+}
+
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
+/**
+ * List links with optional search + pagination.
+ */
+export async function dbListLinksPage(
+  db: D1Database,
+  options: {
+    q?: string;
+    exactId?: number | null;
+    page: number;
+    pageSize: number;
+  }
+): Promise<LinksPageResult> {
+  const trimmedQuery = options.q?.trim() ?? '';
+  const hasQuery = trimmedQuery.length > 0;
+  const hasExactId = typeof options.exactId === 'number' && Number.isFinite(options.exactId);
+  const page = Math.max(1, Math.trunc(options.page));
+  const pageSize = Math.min(100, Math.max(1, Math.trunc(options.pageSize)));
+  const offset = (page - 1) * pageSize;
+
+  const whereClause = hasQuery || hasExactId
+    ? `WHERE (
+         l.url LIKE ? ESCAPE '\\'
+         OR IFNULL(l.og_title, '') LIKE ? ESCAPE '\\'
+         OR IFNULL(l.og_desc, '') LIKE ? ESCAPE '\\'
+         OR CAST(l.id AS TEXT) LIKE ? ESCAPE '\\'
+         OR (? IS NOT NULL AND l.id = ?)
+       )`
+    : '';
+
+  const searchValue = hasQuery ? `%${escapeLike(trimmedQuery)}%` : '';
+  const exactId = hasExactId ? Math.trunc(options.exactId as number) : null;
+  const baseBindings = [searchValue, searchValue, searchValue, searchValue, exactId, exactId];
+  const countBindings = hasQuery || hasExactId ? baseBindings : [];
+  const listBindings = hasQuery || hasExactId ? [...baseBindings, pageSize, offset] : [pageSize, offset];
+
+  const countQuery = `SELECT COUNT(*) as count FROM links l ${whereClause}`;
+  const listQuery = `SELECT l.*, COUNT(c.id) as click_count
+                     FROM links l
+                     LEFT JOIN clicks c ON c.link_id = l.id
+                     ${whereClause}
+                     GROUP BY l.id
+                     ORDER BY l.created_at DESC
+                     LIMIT ? OFFSET ?`;
+
+  const [countResult, listResult] = await Promise.all([
+    db.prepare(countQuery).bind(...countBindings).first<{ count: number }>(),
+    db.prepare(listQuery).bind(...listBindings).all<LinkWithStats>(),
+  ]);
+
+  return {
+    items: listResult.results ?? [],
+    total: Number(countResult?.count ?? 0),
+  };
 }
 
 /**

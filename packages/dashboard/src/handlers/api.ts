@@ -1,9 +1,16 @@
 import { Context } from 'hono';
 import { DashboardEnv } from '../types.js';
 import { isAuthenticated } from '../utils/auth.js';
-import { sqidsEncodeId, loganEncodeId, kvSet, kvDelete } from '@url-shortener/shared';
 import {
-  dbListLinks,
+  sqidsEncodeId,
+  loganEncodeId,
+  sqidsDecodeSlug,
+  loganDecodeSlug,
+  kvSet,
+  kvDelete,
+} from '@url-shortener/shared';
+import {
+  dbListLinksPage,
   dbGetLink,
   dbCreateLink,
   dbUpdateLink,
@@ -14,6 +21,7 @@ import {
   dbGetOverviewStats,
 } from '../services/db.js';
 import { r2Upload, r2Delete, r2KeyFromUrl } from '../services/r2.js';
+import { buildShareQrPng } from '../services/qr.js';
 
 const PREVIEW_FETCH_TIMEOUT_MS = 8000;
 const PREVIEW_MAX_HTML_BYTES = 256 * 1024;
@@ -168,17 +176,115 @@ function buildLinkResponse(
   };
 }
 
+function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback;
+  const value = Number.parseInt(raw, 10);
+  if (!Number.isFinite(value) || value <= 0) return fallback;
+  return value;
+}
+
+function buildLinkSharePayload(link: { id: number; url: string }, baseUrl: string) {
+  const shortUrl = `${baseUrl}/${sqidsEncodeId(link.id)}`;
+  const longUrl = `${baseUrl}/${loganEncodeId(link.id)}`;
+  return {
+    shortUrl,
+    longUrl,
+    targetUrl: link.url,
+    shortShareText: `Check this link: ${shortUrl}`,
+    longShareText: `Check this link: ${longUrl}`,
+  };
+}
+
 /**
- * GET /api/links — list all links with click counts
+ * GET /api/links — list links with search + pagination
  */
 export async function listLinks(c: Context<{ Bindings: DashboardEnv }>): Promise<Response> {
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const links = await dbListLinks(c.env.DB);
-  const baseUrl = c.env.SHORT_BASE_URL;
+  const q = c.req.query('q')?.trim() || undefined;
+  const page = parsePositiveInt(c.req.query('page'), 1);
+  const pageSize = Math.min(parsePositiveInt(c.req.query('pageSize'), 20), 100);
 
-  return c.json(links.map((l) => buildLinkResponse(l, baseUrl, { clickCount: l.click_count })));
+  const exactId = q ? sqidsDecodeSlug(q) ?? loganDecodeSlug(q) : null;
+
+  const { items, total } = await dbListLinksPage(c.env.DB, {
+    q,
+    exactId,
+    page,
+    pageSize,
+  });
+
+  const baseUrl = c.env.SHORT_BASE_URL;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  return c.json({
+    items: items.map((item) => buildLinkResponse(item, baseUrl, { clickCount: item.click_count })),
+    page,
+    pageSize,
+    total,
+    totalPages,
+  });
+}
+
+/**
+ * GET /api/links/:id — get one link
+ */
+export async function getLink(c: Context<{ Bindings: DashboardEnv }>): Promise<Response> {
+  const denied = authGuard(c);
+  if (denied) return denied;
+
+  const id = parseInt(c.req.param('id') ?? '', 10);
+  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+
+  const link = await dbGetLink(c.env.DB, id);
+  if (!link) return c.json({ error: 'Link not found' }, 404);
+
+  return c.json(buildLinkResponse(link, c.env.SHORT_BASE_URL));
+}
+
+/**
+ * GET /api/links/:id/share — share payload for mobile/native share sheet
+ */
+export async function getLinkShare(c: Context<{ Bindings: DashboardEnv }>): Promise<Response> {
+  const denied = authGuard(c);
+  if (denied) return denied;
+
+  const id = parseInt(c.req.param('id') ?? '', 10);
+  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+
+  const link = await dbGetLink(c.env.DB, id);
+  if (!link) return c.json({ error: 'Link not found' }, 404);
+
+  return c.json(buildLinkSharePayload(link, c.env.SHORT_BASE_URL));
+}
+
+/**
+ * GET /api/links/:id/qr — generated PNG with short + long QR codes
+ */
+export async function getLinkQr(c: Context<{ Bindings: DashboardEnv }>): Promise<Response> {
+  const denied = authGuard(c);
+  if (denied) return denied;
+
+  const id = parseInt(c.req.param('id') ?? '', 10);
+  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+
+  const link = await dbGetLink(c.env.DB, id);
+  if (!link) return c.json({ error: 'Link not found' }, 404);
+
+  const sharePayload = buildLinkSharePayload(link, c.env.SHORT_BASE_URL);
+  const png = buildShareQrPng([
+    { label: 'Short', value: sharePayload.shortUrl },
+    { label: 'Long', value: sharePayload.longUrl },
+  ]);
+
+  return new Response(png, {
+    headers: {
+      'Content-Type': 'image/png',
+      'Cache-Control': 'private, max-age=300',
+      'Content-Disposition': `inline; filename="link-${id}-qr.png"`,
+    },
+  });
 }
 
 /**
