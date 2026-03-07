@@ -40,6 +40,25 @@
                 </template>
               </AppButton>
             </div>
+
+            <div class="flex items-center gap-2">
+              <span class="w-14 flex-shrink-0 text-slate-400">Debug:</span>
+              <a
+                :href="debugOgUrl"
+                target="_blank"
+                class="tool-link min-w-0 flex-1 truncate"
+              >
+                {{ debugOgUrl }}
+              </a>
+              <AppButton type="button" variant="ghost" aria-label="Copy debug OG URL" class="h-9 w-9 px-0" @click="copyUrl(debugOgUrl)">
+                <template #icon>
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </template>
+              </AppButton>
+            </div>
           </AppCard>
 
           <div>
@@ -145,7 +164,7 @@ import OgPreviewCard from '@/components/OgPreviewCard.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import AppCard from '@/components/ui/AppCard.vue';
 
-const DEFAULT_OG_IMAGE = 'https://go.dotw.me/assets/og-default.png';
+const DEFAULT_OG_IMAGE = 'https://go.dotw.me/dashboard/og-default.svg';
 const PREVIEW_UNAVAILABLE_DESC = 'Preview unavailable';
 
 const route = useRoute();
@@ -209,6 +228,17 @@ const destinationCardImage = computed(() => {
 const cardTitle = computed(() => (form.value.ogEnabled ? previewTitle.value : destinationCardTitle.value));
 const cardDescription = computed(() => (form.value.ogEnabled ? previewDescription.value : destinationCardDescription.value));
 const cardImageUrl = computed(() => (form.value.ogEnabled ? previewImageUrl.value : destinationCardImage.value));
+const debugOgUrl = computed(() => {
+  const short = link.value?.shortUrl;
+  if (!short) return '';
+  try {
+    const u = new URL(short);
+    u.searchParams.set('og', '1');
+    return u.toString();
+  } catch {
+    return `${short}?og=1`;
+  }
+});
 
 onMounted(async () => {
   try {
