@@ -10,9 +10,15 @@
     "noImplicitReturns": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
+    "paths": {
+      "@url-shortener/shared": ["./packages/shared/src/index.ts"]
+    }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dashboard"]
+  "include": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/redirect" },
+    { "path": "./packages/dashboard" }
+  ],
+  "exclude": ["node_modules"]
 }

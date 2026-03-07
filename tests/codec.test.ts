@@ -1,47 +1,42 @@
 import { describe, it, expect } from 'vitest';
-import { encodeId as sqidsEncode, decodeSlug as sqidsDecode } from '../src/codec/sqids';
-import {
-  encodeId as loganEncode,
-  decodeSlug as loganDecode,
-  LOGAN_PATTERN,
-} from '../src/codec/logan';
+import { sqidsEncodeId, sqidsDecodeSlug, loganEncodeId, loganDecodeSlug, LOGAN_PATTERN } from '@url-shortener/shared';
 
 // ── Sqids codec ──────────────────────────────────────────────────────────────
 
 describe('Sqids codec', () => {
   it('encodes 0 to a string of at least 2 chars', () => {
-    const slug = sqidsEncode(0);
+    const slug = sqidsEncodeId(0);
     expect(slug.length).toBeGreaterThanOrEqual(2);
   });
 
   it('round-trips small IDs', () => {
     for (const id of [0, 1, 5, 42, 100, 999]) {
-      expect(sqidsDecode(sqidsEncode(id))).toBe(id);
+      expect(sqidsDecodeSlug(sqidsEncodeId(id))).toBe(id);
     }
   });
 
   it('round-trips large IDs', () => {
     for (const id of [1000, 9999, 100_000, 1_000_000]) {
-      expect(sqidsDecode(sqidsEncode(id))).toBe(id);
+      expect(sqidsDecodeSlug(sqidsEncodeId(id))).toBe(id);
     }
   });
 
   it('returns null for an invalid slug', () => {
-    expect(sqidsDecode('!@#$')).toBeNull();
-    expect(sqidsDecode('')).toBeNull();
+    expect(sqidsDecodeSlug('!@#$')).toBeNull();
+    expect(sqidsDecodeSlug('')).toBeNull();
   });
 
   it('does not contain l, g, a, n characters in alphabet', () => {
     // Encode many IDs and check that none of the characters l/g/a/n appear
     for (let id = 0; id < 200; id++) {
-      const slug = sqidsEncode(id);
+      const slug = sqidsEncodeId(id);
       expect(slug).not.toMatch(/[lgan]/);
     }
   });
 
   it('encoded slugs do NOT match the logan pattern', () => {
     for (let id = 0; id < 100; id++) {
-      const slug = sqidsEncode(id);
+      const slug = sqidsEncodeId(id);
       expect(LOGAN_PATTERN.test(slug)).toBe(false);
     }
   });
@@ -64,35 +59,35 @@ describe('Logan codec', () => {
 
   it('encodes known IDs correctly', () => {
     for (const [id, expected] of cases) {
-      expect(loganEncode(id)).toBe(expected);
+      expect(loganEncodeId(id)).toBe(expected);
     }
   });
 
   it('decodes known slugs correctly', () => {
     for (const [id, slug] of cases) {
-      expect(loganDecode(slug)).toBe(id);
+      expect(loganDecodeSlug(slug)).toBe(id);
     }
   });
 
   it('round-trips arbitrary IDs', () => {
     for (let id = 0; id < 300; id++) {
-      expect(loganDecode(loganEncode(id))).toBe(id);
+      expect(loganDecodeSlug(loganEncodeId(id))).toBe(id);
     }
   });
 
   it('minimum 2 o characters in encoded output', () => {
-    const slug = loganEncode(0);
+    const slug = loganEncodeId(0);
     // "loogan" has 2 o chars between l and gan
     const inner = slug.slice(1, -3);
     expect(inner.length).toBeGreaterThanOrEqual(2);
   });
 
   it('returns null for invalid slugs', () => {
-    expect(loganDecode('loogan_bad')).toBeNull();
-    expect(loganDecode('short')).toBeNull();
-    expect(loganDecode('')).toBeNull();
-    expect(loganDecode('lxgan')).toBeNull();
-    expect(loganDecode('logan')).toBeNull(); // only 1 o char, invalid
+    expect(loganDecodeSlug('loogan_bad')).toBeNull();
+    expect(loganDecodeSlug('short')).toBeNull();
+    expect(loganDecodeSlug('')).toBeNull();
+    expect(loganDecodeSlug('lxgan')).toBeNull();
+    expect(loganDecodeSlug('logan')).toBeNull(); // only 1 o char, invalid
   });
 
   it('LOGAN_PATTERN matches valid slugs', () => {

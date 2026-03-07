@@ -1,30 +1,16 @@
 {
-  "name": "url-shortener",
+  "name": "url-shortener-monorepo",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "cf-typegen": "wrangler types"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/iml885203/url-shortener.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "private": true,
   "type": "module",
-  "bugs": {
-    "url": "https://github.com/iml885203/url-shortener/issues"
-  },
-  "homepage": "https://github.com/iml885203/url-shortener#readme",
-  "dependencies": {
-    "hono": "^4.12.5",
-    "sqids": "^0.3.0"
+  "workspaces": [
+    "packages/shared",
+    "packages/redirect",
+    "packages/dashboard"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260307.1",

@@ -90,8 +90,22 @@ export async function handleRedirect(c: Context<{ Bindings: Env }>): Promise<Res
 
   const targetUrl = linkData.url;
 
-  // 3. Log click asynchronously
   const ua = c.req.header('User-Agent') ?? null;
+
+  // 3. Crawlers get OG HTML (if enabled) — no click logged
+  const legacyCustomOg = Boolean(linkData.ogTitle || linkData.ogDesc || linkData.ogImage);
+  const ogEnabled = typeof linkData.ogEnabled === 'boolean' ? linkData.ogEnabled : legacyCustomOg;
+
+  if (isCrawler(ua)) {
+    if (ogEnabled) {
+      const shortUrl = `${c.env.SHORT_BASE_URL}/${slug}`;
+      const html = buildOgHtml(targetUrl, linkData, shortUrl, c.env.DEFAULT_OG_IMAGE);
+      return c.html(html, 200);
+    }
+    return c.redirect(targetUrl, 302);
+  }
+
+  // 4. Real user — log click asynchronously, then redirect
   const referrer = c.req.header('Referer') ?? null;
   const cfData = (c.req.raw as unknown as { cf?: { country?: string } }).cf;
   const country = cfData?.country ?? null;
@@ -109,16 +123,6 @@ export async function handleRedirect(c: Context<{ Bindings: Env }>): Promise<Res
       });
     })()
   );
-
-  // 4. Crawlers with ogEnabled=true get HTML, everyone else gets a redirect
-  const legacyCustomOg = Boolean(linkData.ogTitle || linkData.ogDesc || linkData.ogImage);
-  const ogEnabled = typeof linkData.ogEnabled === 'boolean' ? linkData.ogEnabled : legacyCustomOg;
-
-  if (isCrawler(ua) && ogEnabled === true) {
-    const shortUrl = `${c.env.SHORT_BASE_URL}/${slug}`;
-    const html = buildOgHtml(targetUrl, linkData, shortUrl, c.env.DEFAULT_OG_IMAGE);
-    return c.html(html, 200);
-  }
 
   return c.redirect(targetUrl, 302);
 }
