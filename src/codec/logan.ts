@@ -39,7 +39,7 @@ export function encodeId(id: number): string {
   // Replace each digit with corresponding Unicode o character
   const oStr = base4
     .split('')
-    .map((d) => O_CHARS[parseInt(d, 4)])
+    .map((d) => O_CHARS[Number(d)])
     .join('');
 
   return `l${oStr}gan`;
