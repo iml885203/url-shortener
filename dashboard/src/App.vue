@@ -8,7 +8,14 @@
       <AppButton to="/overview" :variant="tabVariant('overview')" class="h-9 px-3">Overview</AppButton>
       <AppButton to="/links" :variant="tabVariant('links')" class="h-9 px-3">Links</AppButton>
       <AppButton to="/links/new" :variant="tabVariant('create')" class="h-9 px-3">Create</AppButton>
-      <AppButton variant="ghost" class="ml-auto h-9 px-3" @click="logout">Logout</AppButton>
+      <AppButton variant="ghost" class="ml-auto h-9 px-3" @click="logout">
+        <template #icon>
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+          </svg>
+        </template>
+        Logout
+      </AppButton>
     </nav>
 
     <main class="mx-auto max-w-5xl px-4 py-6 sm:py-8">

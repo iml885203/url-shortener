@@ -2,7 +2,14 @@
   <div class="space-y-5">
     <div class="flex items-center justify-between gap-3">
       <h1 class="tool-heading text-xl font-semibold tracking-tight text-slate-100">Overview</h1>
-      <AppButton to="/links/new" variant="secondary">New link</AppButton>
+      <AppButton to="/links/new" variant="secondary">
+        <template #icon>
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </template>
+        New link
+      </AppButton>
     </div>
 
     <div v-if="loading" class="space-y-5">
@@ -33,7 +40,14 @@
     <AppCard v-else-if="isEmpty" class="text-center">
       <h2 class="text-base font-medium text-slate-100">No analytics yet</h2>
       <p class="mt-2 text-sm text-slate-400">Create links and share them to start seeing activity here.</p>
-      <AppButton to="/links/new" variant="secondary" class="mt-5">Create first link</AppButton>
+      <AppButton to="/links/new" variant="secondary" class="mt-5">
+        <template #icon>
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </template>
+        Create first link
+      </AppButton>
     </AppCard>
 
     <div v-else class="space-y-5">

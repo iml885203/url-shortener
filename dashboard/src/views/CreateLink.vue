@@ -65,9 +65,21 @@
 
           <div class="flex flex-col gap-3 pt-1 sm:flex-row">
             <AppButton type="submit" :disabled="loading" variant="primary" class="w-full sm:w-auto">
+              <template #icon>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </template>
               {{ loading ? 'Creating…' : 'Create Link' }}
             </AppButton>
-            <AppButton to="/links" variant="secondary" class="w-full sm:w-auto">Cancel</AppButton>
+            <AppButton to="/links" variant="secondary" class="w-full sm:w-auto">
+              <template #icon>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </template>
+              Cancel
+            </AppButton>
           </div>
         </AppCard>
       </form>
@@ -162,8 +174,22 @@
           </div>
 
           <div class="mt-5 flex flex-col gap-3 pt-1 sm:flex-row">
-            <AppButton type="button" @click="createAnother" variant="primary" class="flex-1">Create Another</AppButton>
-            <AppButton to="/links" variant="secondary" class="flex-1">Back to List</AppButton>
+            <AppButton type="button" @click="createAnother" variant="primary" class="flex-1">
+              <template #icon>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </template>
+              Create Another
+            </AppButton>
+            <AppButton to="/links" variant="secondary" class="flex-1">
+              <template #icon>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
+              </template>
+              Back to List
+            </AppButton>
           </div>
         </AppCard>
       </div>

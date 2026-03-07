@@ -1,7 +1,14 @@
 <template>
   <div class="max-w-3xl space-y-6">
     <div class="flex flex-wrap items-center gap-3">
-      <AppButton to="/links" variant="secondary">Back to links</AppButton>
+      <AppButton to="/links" variant="secondary">
+        <template #icon>
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+        </template>
+        Back to links
+      </AppButton>
       <h1 class="tool-heading text-xl font-semibold text-slate-100">Click Stats</h1>
     </div>
 
