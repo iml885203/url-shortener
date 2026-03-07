@@ -1,22 +1,22 @@
 <template>
-  <div class="flex items-center justify-center min-h-[60vh]">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 w-full max-w-sm">
-      <h1 class="text-xl font-semibold mb-6 text-center">🔗 URL Shortener</h1>
+  <div class="flex items-center justify-center min-h-[70vh] px-4">
+    <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-8 w-full max-w-sm">
+      <h1 class="text-xl font-semibold mb-6 text-center text-white">🔗 URL Shortener</h1>
       <form @submit.prevent="submit">
-        <label class="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+        <label class="block text-sm font-medium text-gray-300 mb-1">API Key</label>
         <input
           v-model="key"
           type="password"
           autocomplete="current-password"
-          class="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
+          class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           placeholder="Enter your API key"
           required
         />
-        <p v-if="error" class="mt-2 text-sm text-red-600">{{ error }}</p>
+        <p v-if="error" class="mt-2 text-sm text-red-400">{{ error }}</p>
         <button
           type="submit"
           :disabled="loading"
-          class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50"
+          class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50 transition-colors"
         >
           {{ loading ? 'Verifying…' : 'Sign in' }}
         </button>
