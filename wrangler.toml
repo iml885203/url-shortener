@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Custom domain
+routes = [
+  { pattern = "go.dotw.me", custom_domain = true }
+]
+
 # Serve dashboard static files from the built Vite output
 [assets]
 directory = "./dashboard/dist"
@@ -11,19 +16,18 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "url-shortener"
-database_id = "YOUR_D1_DATABASE_ID"
+database_id = "624589f3-8ea6-4dc0-aa9f-e6fc7f849aed"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "YOUR_KV_NAMESPACE_ID"
-preview_id = "YOUR_KV_PREVIEW_ID"
+id = "efa24714fbc74f20876627faf727244e"
 
 [[r2_buckets]]
 binding = "R2"
 bucket_name = "url-shortener-images"
 
 [vars]
-SHORT_BASE_URL = "https://go.logan.tw"
-R2_BASE_URL = "https://r2.go.logan.tw"
+SHORT_BASE_URL = "https://go.dotw.me"
+R2_BASE_URL = "https://r2-go.dotw.me"
 
 # Set secrets via: wrangler secret put API_KEY
