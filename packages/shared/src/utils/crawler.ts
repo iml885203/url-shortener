@@ -1,27 +1,18 @@
+import { isbot } from 'isbot';
+
 /**
  * Crawler detection for OG preview rendering.
  *
- * Traceable sources and confidence notes live in:
- *   packages/shared/references/crawler-ua.md
- *
- * Design:
- * - Prefer explicit, platform-specific UA keywords (high confidence).
- * - Keep one low-confidence fallback group for unknown validators (`crawler`, `bot`).
+ * Strategy:
+ * 1) Use `isbot` as maintained baseline (reduces manual UA maintenance)
+ * 2) Keep explicit social-preview keywords as safety net
  */
 
-export const KNOWN_PREVIEW_BOT_KEYWORDS = [
-  // Meta/Facebook
+export const PREVIEW_BOT_KEYWORDS = [
   'facebookexternalhit',
   'facebot',
-
-  // X/Twitter
   'twitterbot',
-
-  // LinkedIn
   'linkedinbot',
-  'LinkedInBot',
-
-  // Chat platforms
   'discordbot',
   'slackbot',
   'Slack-ImgProxy',
@@ -29,29 +20,19 @@ export const KNOWN_PREVIEW_BOT_KEYWORDS = [
   'WhatsApp',
   'TelegramBot',
   'LINE',
-
-  // Search/archive bots that often fetch metadata
-  'googlebot',
-  'bingbot',
-  'DuckDuckBot',
-  'Applebot',
-  'ia_archiver',
 ] as const;
 
-/**
- * Heuristic fallback keywords.
- * Lower confidence than known platform bots; kept for practical coverage of
- * preview validators we haven't explicitly enumerated yet.
- */
-export const HEURISTIC_BOT_KEYWORDS = ['crawler', 'bot'] as const;
-
-const KNOWN_BOT_RE = new RegExp(KNOWN_PREVIEW_BOT_KEYWORDS.join('|'), 'i');
-const HEURISTIC_BOT_RE = new RegExp(HEURISTIC_BOT_KEYWORDS.join('|'), 'i');
+const PREVIEW_BOT_RE = new RegExp(PREVIEW_BOT_KEYWORDS.join('|'), 'i');
 
 /**
- * Returns true if the User-Agent string looks like a crawler that should get OG HTML.
+ * Returns true if User-Agent should be treated as crawler/preview bot.
  */
 export function isCrawler(userAgent: string | null | undefined): boolean {
   if (!userAgent) return false;
-  return KNOWN_BOT_RE.test(userAgent) || HEURISTIC_BOT_RE.test(userAgent);
+
+  // explicit preview bots first
+  if (PREVIEW_BOT_RE.test(userAgent)) return true;
+
+  // maintained generic bot detection baseline
+  return isbot(userAgent);
 }

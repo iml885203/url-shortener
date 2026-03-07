@@ -4,6 +4,10 @@ Last updated: 2026-03-07
 
 This file is the audit trail for `src/utils/crawler.ts`.
 
+Current implementation:
+- Baseline: `isbot` package (maintained bot detector)
+- Overlay: explicit social preview keywords (Discord/Slack/Meta/X/etc.) as safety net
+
 ## Rule fields
 
 Each rule should track:

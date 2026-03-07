@@ -8,6 +8,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "isbot": "^5.1.30",
     "sqids": "^0.3.0"
   },
   "devDependencies": {
