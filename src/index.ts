@@ -30,20 +30,14 @@ app.delete('/api/links/:id', deleteLink);
 app.get('/api/links/:id/stats', getLinkStats);
 app.post('/api/upload', uploadImage);
 
-// Dashboard SPA — serve static assets
-app.get('/dashboard', (c) => c.redirect('/dashboard/'));
-app.get('/dashboard/*', async (c) => {
-  const assets = (c.env as Env & { ASSETS?: { fetch: (req: Request) => Promise<Response> } }).ASSETS;
-  if (assets) {
-    return assets.fetch(c.req.raw);
-  }
-  return c.text('Dashboard not available', 404);
-});
+// Dashboard — redirect root and serve SPA via static assets
+// Static files in dashboard/dist/ are served by Cloudflare Pages/Workers assets binding
+// The Worker itself only needs to handle the /dashboard/ rewrite for deep links.
 
-// Redirect handler (must be last to avoid conflicts)
-app.get('/:slug', handleRedirect);
-
-// Root
+// Root redirects to dashboard
 app.get('/', (c) => c.redirect('/dashboard/'));
+
+// Redirect handler (must be last — handles short/long URL slugs)
+app.get('/:slug', handleRedirect);
 
 export default app;

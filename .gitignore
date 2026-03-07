@@ -1,0 +1,10 @@
+node_modules/
+dashboard/node_modules/
+dashboard/dist/
+dashboard-dist/
+.wrangler/
+dist/
+*.local
+.env
+.env.*
+!.env.example

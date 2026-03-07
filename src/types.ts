@@ -5,6 +5,8 @@ export interface Env {
   KV: KVNamespace;
   // R2 Bucket
   R2: R2Bucket;
+  // Static assets (dashboard SPA)
+  ASSETS: Fetcher;
   // Environment variables
   API_KEY: string;
   SHORT_BASE_URL: string;

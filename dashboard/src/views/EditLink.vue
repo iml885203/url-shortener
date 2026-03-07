@@ -1,0 +1,168 @@
+<template>
+  <div class="max-w-xl">
+    <h1 class="text-xl font-semibold mb-6">Edit Link</h1>
+
+    <div v-if="loading" class="text-center py-16 text-gray-400">Loading…</div>
+    <div v-else-if="loadError" class="text-center py-16 text-red-500">{{ loadError }}</div>
+
+    <form v-else @submit.prevent="submit" class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
+      <!-- Generated URLs display -->
+      <div class="bg-gray-50 rounded-lg p-4 space-y-2 text-xs font-mono">
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 w-14 flex-shrink-0">Short:</span>
+          <a :href="link!.shortUrl" target="_blank" class="text-indigo-600 hover:underline">{{ link!.shortUrl }}</a>
+          <button type="button" @click="copy(link!.shortUrl)" class="text-gray-400 hover:text-gray-600 ml-auto">📋</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 w-14 flex-shrink-0">Long:</span>
+          <a :href="link!.longUrl" target="_blank" class="text-indigo-400 hover:underline truncate">{{ link!.longUrl }}</a>
+          <button type="button" @click="copy(link!.longUrl)" class="text-gray-400 hover:text-gray-600 ml-auto">📋</button>
+        </div>
+      </div>
+
+      <!-- Target URL -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Target URL <span class="text-red-500">*</span></label>
+        <input
+          v-model="form.url"
+          type="url"
+          required
+          class="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
+        />
+      </div>
+
+      <!-- OG Title -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">OG Title</label>
+        <input v-model="form.ogTitle" type="text" class="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+      </div>
+
+      <!-- OG Description -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">OG Description</label>
+        <textarea v-model="form.ogDesc" rows="2" class="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+      </div>
+
+      <!-- OG Image URL + upload -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">OG Image</label>
+        <input v-model="form.ogImage" type="url" class="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500 mb-2" placeholder="https://…" />
+        <!-- Image preview -->
+        <img v-if="form.ogImage" :src="form.ogImage" alt="OG preview" class="mt-2 rounded-lg border border-gray-200 max-h-32 object-cover" />
+        <!-- File upload -->
+        <div class="mt-2">
+          <label class="text-xs text-gray-500 font-medium">Upload image:</label>
+          <input
+            type="file"
+            accept="image/*"
+            @change="handleFileChange"
+            class="block mt-1 text-xs text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+          />
+        </div>
+        <p v-if="uploadError" class="text-xs text-red-500 mt-1">{{ uploadError }}</p>
+        <p v-if="uploadLoading" class="text-xs text-gray-400 mt-1">Uploading…</p>
+      </div>
+
+      <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
+      <p v-if="saved" class="text-sm text-green-600">✓ Saved</p>
+
+      <div class="flex gap-3">
+        <button
+          type="submit"
+          :disabled="saving"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2 rounded-md disabled:opacity-50"
+        >
+          {{ saving ? 'Saving…' : 'Save' }}
+        </button>
+        <RouterLink to="/links" class="text-sm text-gray-500 hover:text-gray-700 px-4 py-2">← Back</RouterLink>
+        <RouterLink :to="`/links/${link!.id}/stats`" class="text-sm text-gray-500 hover:text-gray-700 px-4 py-2 ml-auto">Stats →</RouterLink>
+      </div>
+    </form>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+import { listLinks, updateLink, uploadImage, type Link } from '@/api/client';
+
+const route = useRoute();
+const linkId = Number(route.params.id);
+
+const link = ref<Link | null>(null);
+const loading = ref(true);
+const loadError = ref('');
+const saving = ref(false);
+const error = ref('');
+const saved = ref(false);
+const uploadLoading = ref(false);
+const uploadError = ref('');
+
+const form = ref({
+  url: '',
+  ogTitle: '',
+  ogDesc: '',
+  ogImage: '',
+});
+
+onMounted(async () => {
+  try {
+    const links = await listLinks();
+    link.value = links.find((l) => l.id === linkId) ?? null;
+    if (link.value) {
+      form.value = {
+        url: link.value.url,
+        ogTitle: link.value.ogTitle ?? '',
+        ogDesc: link.value.ogDesc ?? '',
+        ogImage: link.value.ogImage ?? '',
+      };
+    } else {
+      loadError.value = 'Link not found';
+    }
+  } catch (e: unknown) {
+    loadError.value = (e as Error).message;
+  } finally {
+    loading.value = false;
+  }
+});
+
+async function submit() {
+  error.value = '';
+  saved.value = false;
+  saving.value = true;
+  try {
+    const updated = await updateLink(linkId, {
+      url: form.value.url,
+      ogTitle: form.value.ogTitle || null,
+      ogDesc: form.value.ogDesc || null,
+      ogImage: form.value.ogImage || null,
+    });
+    link.value = updated;
+    saved.value = true;
+    setTimeout(() => (saved.value = false), 2000);
+  } catch (e: unknown) {
+    error.value = (e as Error).message;
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function handleFileChange(evt: Event) {
+  const file = (evt.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  uploadError.value = '';
+  uploadLoading.value = true;
+  try {
+    const url = await uploadImage(linkId, file);
+    form.value.ogImage = url;
+  } catch (e: unknown) {
+    uploadError.value = (e as Error).message;
+  } finally {
+    uploadLoading.value = false;
+  }
+}
+
+function copy(text: string) {
+  navigator.clipboard.writeText(text).catch(() => {});
+}
+</script>
