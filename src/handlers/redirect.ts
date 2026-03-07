@@ -44,7 +44,12 @@ function buildOgHtml(targetUrl: string, data: KVLinkData, shortUrl: string): str
 export async function handleRedirect(c: Context<{ Bindings: Env }>): Promise<Response> {
   const rawSlug = c.req.param('slug') ?? '';
   // Decode percent-encoded Unicode characters (e.g. logan encoding o variants)
-  const slug = decodeURIComponent(rawSlug);
+  let slug: string;
+  try {
+    slug = decodeURIComponent(rawSlug);
+  } catch {
+    return c.text('Not found', 404);
+  }
 
   // 1. Decode slug to ID
   let id: number | null = null;

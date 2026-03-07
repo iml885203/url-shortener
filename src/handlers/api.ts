@@ -71,12 +71,15 @@ export async function createLink(c: Context<{ Bindings: Env }>): Promise<Respons
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  if (!body.url) {
+  if (!body.url || !body.url.trim()) {
     return c.json({ error: 'url is required' }, 400);
   }
 
   try {
-    new URL(body.url);
+    const parsed = new URL(body.url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return c.json({ error: 'URL must use http or https scheme' }, 400);
+    }
   } catch {
     return c.json({ error: 'Invalid URL' }, 400);
   }
@@ -116,9 +119,15 @@ export async function updateLink(c: Context<{ Bindings: Env }>): Promise<Respons
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  if (body.url) {
+  if (body.url !== undefined) {
+    if (!body.url.trim()) {
+      return c.json({ error: 'url cannot be empty' }, 400);
+    }
     try {
-      new URL(body.url);
+      const parsed = new URL(body.url);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return c.json({ error: 'URL must use http or https scheme' }, 400);
+      }
     } catch {
       return c.json({ error: 'Invalid URL' }, 400);
     }
@@ -211,6 +220,10 @@ export async function uploadImage(c: Context<{ Bindings: Env }>): Promise<Respon
 
   const file = formData.get('image') as File | null;
   if (!file) return c.json({ error: 'image field is required' }, 400);
+
+  if (file.size > 5 * 1024 * 1024) {
+    return c.json({ error: 'Image must be 5MB or smaller' }, 400);
+  }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   if (!allowedTypes.includes(file.type)) {

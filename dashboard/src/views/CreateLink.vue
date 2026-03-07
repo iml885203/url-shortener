@@ -145,11 +145,9 @@
 
 <script setup lang="ts">
 import { ref, inject } from 'vue';
-import { useRouter } from 'vue-router';
 import { createLink, type Link } from '@/api/client';
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
 
-const router = useRouter();
 const loading = ref(false);
 const error = ref('');
 const createdLink = ref<Link | null>(null);

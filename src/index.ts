@@ -16,7 +16,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 // CORS for dashboard
 app.use('/api/*', cors({
-  origin: ['http://localhost:5173', 'https://go.logan.tw'],
+  origin: ['http://localhost:5173', 'https://go.dotw.me'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
 }));
@@ -32,6 +32,9 @@ app.post('/api/upload', uploadImage);
 
 // Root redirects to dashboard
 app.get('/', (c) => c.redirect('/dashboard/'));
+
+// Redirect /dashboard → /dashboard/ (trailing slash for SPA)
+app.get('/dashboard', (c) => c.redirect('/dashboard/'));
 
 // Dashboard SPA — try static asset first, fallback to index.html for SPA routing
 app.get('/dashboard/*', async (c) => {

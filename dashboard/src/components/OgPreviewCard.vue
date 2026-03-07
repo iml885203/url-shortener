@@ -3,7 +3,7 @@
     <!-- Image area: 16:9 aspect ratio -->
     <div class="w-full aspect-video bg-gray-900 flex items-center justify-center overflow-hidden">
       <img
-        v-if="imageUrl"
+        v-if="imageUrl && !imgErrored"
         :src="imageUrl"
         alt="OG image preview"
         class="w-full h-full object-cover"
