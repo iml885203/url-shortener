@@ -145,10 +145,10 @@
           <p class="text-xs text-slate-400">clicks</p>
         </div>
 
-        <div class="flex flex-col gap-1.5">
-          <AppButton :to="`/links/${link.id}/stats`" variant="secondary">Stats</AppButton>
-          <AppButton :to="`/links/${link.id}/edit`" variant="secondary">Edit</AppButton>
-          <AppButton type="button" variant="secondary" @click="promptDelete(link)">Delete</AppButton>
+        <div class="flex items-center gap-1.5">
+          <AppButton :to="`/links/${link.id}/stats`" variant="secondary" class="h-8 px-2.5 text-xs">Stats</AppButton>
+          <AppButton :to="`/links/${link.id}/edit`" variant="secondary" class="h-8 px-2.5 text-xs">Edit</AppButton>
+          <AppButton type="button" variant="secondary" class="h-8 px-2.5 text-xs" @click="promptDelete(link)">Delete</AppButton>
         </div>
       </div>
     </AppCard>
