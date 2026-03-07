@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-3xl space-y-6">
+  <div class="mx-auto max-w-3xl space-y-6">
     <div class="flex flex-wrap items-center gap-3">
       <AppButton to="/links" variant="secondary">
         <template #icon>
