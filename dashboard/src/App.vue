@@ -1,12 +1,21 @@
 <template>
-  <div class="min-h-screen bg-gray-900 text-gray-100">
-    <nav v-if="isLoggedIn" class="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center gap-4 sm:gap-6">
-      <span class="font-semibold text-white text-lg">🔗 URL Shortener</span>
-      <RouterLink to="/links" class="text-sm text-gray-400 hover:text-white transition-colors">Links</RouterLink>
-      <RouterLink to="/links/new" class="text-sm text-gray-400 hover:text-white transition-colors">+ New</RouterLink>
-      <button @click="logout" class="ml-auto text-sm text-gray-500 hover:text-red-400 transition-colors">Logout</button>
+  <div class="min-h-screen bg-slate-950 text-slate-100">
+    <nav
+      v-if="isLoggedIn"
+      class="flex items-center gap-4 border-b border-slate-800 bg-slate-900 px-4 py-3 sm:gap-6"
+    >
+      <span class="text-lg font-semibold text-slate-100">URL Shortener</span>
+      <RouterLink to="/overview" :class="tabClass('overview')" class="text-sm transition-colors">Overview</RouterLink>
+      <RouterLink to="/links" :class="tabClass('links')" class="text-sm transition-colors">Links</RouterLink>
+      <RouterLink to="/links/new" :class="tabClass('create')" class="text-sm transition-colors">Create</RouterLink>
+      <button
+        @click="logout"
+        class="ml-auto text-sm text-slate-400 transition-colors hover:text-slate-100"
+      >
+        Logout
+      </button>
     </nav>
-    <main class="max-w-5xl mx-auto px-4 py-6 sm:py-8">
+    <main class="mx-auto max-w-5xl px-4 py-6 sm:py-8">
       <RouterView />
     </main>
 
@@ -14,9 +23,9 @@
     <Transition name="toast">
       <div
         v-if="toastVisible"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-700 text-white text-sm px-4 py-2 rounded-lg shadow-lg z-50 pointer-events-none"
+        class="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-100"
       >
-        ✓ Copied!
+        Copied
       </div>
     </Transition>
   </div>
@@ -24,14 +33,27 @@
 
 <script setup lang="ts">
 import { computed, ref, provide } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
-const isLoggedIn = computed(() => !!localStorage.getItem('api_key'));
+const route = useRoute();
+const isLoggedIn = computed(() => {
+  route.fullPath;
+  return !!localStorage.getItem('api_key');
+});
 
 function logout() {
   localStorage.removeItem('api_key');
   router.push('/login');
+}
+
+function tabClass(tab: 'overview' | 'links' | 'create'): string {
+  const path = route.path;
+  const active =
+    (tab === 'overview' && path === '/overview') ||
+    (tab === 'links' && path.startsWith('/links') && path !== '/links/new') ||
+    (tab === 'create' && path === '/links/new');
+  return active ? 'text-blue-400' : 'text-slate-400 hover:text-slate-100';
 }
 
 // Global copy toast

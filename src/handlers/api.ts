@@ -13,6 +13,7 @@ import {
   dbGetClicksByDay,
   dbGetClicksByReferrer,
   dbGetClicksByCountry,
+  dbGetOverviewStats,
 } from '../services/db';
 import { r2Upload, r2Delete, r2KeyFromUrl } from '../services/r2';
 
@@ -465,4 +466,29 @@ export async function getMe(c: Context<{ Bindings: Env }>): Promise<Response> {
   const denied = authGuard(c);
   if (denied) return denied;
   return c.json({ ok: true });
+}
+
+/**
+ * GET /api/stats/overview — dashboard aggregate stats
+ */
+export async function getOverviewStats(c: Context<{ Bindings: Env }>): Promise<Response> {
+  const denied = authGuard(c);
+  if (denied) return denied;
+
+  const overview = await dbGetOverviewStats(c.env.DB);
+  const baseUrl = c.env.SHORT_BASE_URL;
+
+  return c.json({
+    todayClicks: overview.todayClicks,
+    weekClicks: overview.weekClicks,
+    totalLinks: overview.totalLinks,
+    topLinks: overview.topLinks.map((link) => ({
+      id: link.id,
+      url: link.url,
+      shortUrl: `${baseUrl}/${sqidsEncode(link.id)}`,
+      longUrl: `${baseUrl}/${loganEncode(link.id)}`,
+      clickCount: link.click_count,
+    })),
+    clicksByDay: overview.clicksByDay,
+  });
 }

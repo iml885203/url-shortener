@@ -11,6 +11,7 @@ import {
   fetchOgPreview,
   uploadImage,
   getMe,
+  getOverviewStats,
 } from './handlers/api';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -29,6 +30,7 @@ app.post('/api/links', createLink);
 app.put('/api/links/:id', updateLink);
 app.delete('/api/links/:id', deleteLink);
 app.get('/api/links/:id/stats', getLinkStats);
+app.get('/api/stats/overview', getOverviewStats);
 app.post('/api/upload', uploadImage);
 app.post('/api/preview/fetch-og', fetchOgPreview);
 

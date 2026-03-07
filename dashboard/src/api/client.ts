@@ -46,6 +46,22 @@ export interface DestinationOgPreview {
   domain: string;
 }
 
+export interface OverviewTopLink {
+  id: number;
+  url: string;
+  shortUrl: string;
+  longUrl: string;
+  clickCount: number;
+}
+
+export interface OverviewStats {
+  todayClicks: number;
+  weekClicks: number;
+  totalLinks: number;
+  topLinks: OverviewTopLink[];
+  clicksByDay: { date: string; count: number }[];
+}
+
 export async function verifyKey(key: string): Promise<boolean> {
   const res = await fetch(`${BASE}/me`, {
     headers: { 'X-API-Key': key },
@@ -103,6 +119,12 @@ export async function deleteLink(id: number): Promise<void> {
 
 export async function getLinkStats(id: number): Promise<Stats> {
   return handleResponse<Stats>(await fetch(`${BASE}/links/${id}/stats`, { headers: headers() }));
+}
+
+export async function getOverviewStats(): Promise<OverviewStats> {
+  return handleResponse<OverviewStats>(
+    await fetch(`${BASE}/stats/overview`, { headers: headers() })
+  );
 }
 
 export async function uploadImage(linkId: number, file: File): Promise<string> {

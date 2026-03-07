@@ -5,6 +5,7 @@ import './style.css';
 
 // Lazy-loaded views
 const Login = () => import('./views/Login.vue');
+const DashboardHome = () => import('./views/DashboardHome.vue');
 const LinkList = () => import('./views/LinkList.vue');
 const CreateLink = () => import('./views/CreateLink.vue');
 const EditLink = () => import('./views/EditLink.vue');
@@ -13,8 +14,9 @@ const LinkStats = () => import('./views/LinkStats.vue');
 const router = createRouter({
   history: createWebHistory('/dashboard/'),
   routes: [
-    { path: '/', redirect: '/links' },
+    { path: '/', redirect: '/overview' },
     { path: '/login', component: Login, meta: { public: true } },
+    { path: '/overview', component: DashboardHome },
     { path: '/links', component: LinkList },
     { path: '/links/new', component: CreateLink },
     { path: '/links/:id/edit', component: EditLink },

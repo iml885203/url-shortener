@@ -114,7 +114,7 @@ async function submit() {
       flashing.value = false;
       await delay(300);
 
-      router.push('/links');
+      router.push('/overview');
     } else {
       // Fail: shake + ACCESS DENIED
       statusMsg.value = 'ACCESS DENIED';

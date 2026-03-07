@@ -5,7 +5,23 @@ import {
   DayStats,
   ReferrerStats,
   CountryStats,
+  OverviewStats,
+  OverviewTopLinkRow,
 } from '../types';
+
+function formatUtcDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function startOfUtcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function addUtcDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
 
 /**
  * Get a single link by ID.
@@ -204,4 +220,76 @@ export async function dbGetRecentClicks(
     .bind(linkId, limit)
     .all<ClickRecord>();
   return result.results ?? [];
+}
+
+/**
+ * Get aggregate overview stats for the dashboard.
+ */
+export async function dbGetOverviewStats(db: D1Database): Promise<OverviewStats> {
+  const [todayResult, weekResult, totalLinksResult, topLinksResult, clicksByDayResult] =
+    await Promise.all([
+      db
+        .prepare(
+          `SELECT COUNT(*) as count
+           FROM clicks
+           WHERE date(clicked_at) = date(?)`
+        )
+        .bind('now')
+        .first<{ count: number }>(),
+      db
+        .prepare(
+          `SELECT COUNT(*) as count
+           FROM clicks
+           WHERE clicked_at >= datetime(?, ?)`
+        )
+        .bind('now', '-7 days')
+        .first<{ count: number }>(),
+      db.prepare('SELECT COUNT(*) as count FROM links').first<{ count: number }>(),
+      db
+        .prepare(
+          `SELECT l.id, l.url, COUNT(c.id) as click_count
+           FROM links l
+           LEFT JOIN clicks c ON c.link_id = l.id
+           GROUP BY l.id
+           ORDER BY click_count DESC, l.id DESC
+           LIMIT ?`
+        )
+        .bind(5)
+        .all<OverviewTopLinkRow>(),
+      db
+        .prepare(
+          `SELECT date(clicked_at) as date, COUNT(*) as count
+           FROM clicks
+           WHERE date(clicked_at) >= date(?, ?)
+           GROUP BY date(clicked_at)
+           ORDER BY date(clicked_at) ASC`
+        )
+        .bind('now', '-13 days')
+        .all<DayStats>(),
+    ]);
+
+  const dayCounts = new Map(
+    (clicksByDayResult.results ?? []).map((row) => [row.date, Number(row.count)])
+  );
+
+  const today = startOfUtcDay(new Date());
+  const range14Start = addUtcDays(today, -13);
+  const clicksByDay: DayStats[] = [];
+
+  for (let i = 0; i < 14; i += 1) {
+    const date = formatUtcDate(addUtcDays(range14Start, i));
+    clicksByDay.push({ date, count: dayCounts.get(date) ?? 0 });
+  }
+
+  return {
+    todayClicks: Number(todayResult?.count ?? 0),
+    weekClicks: Number(weekResult?.count ?? 0),
+    totalLinks: Number(totalLinksResult?.count ?? 0),
+    topLinks: (topLinksResult.results ?? []).map((link) => ({
+      id: link.id,
+      url: link.url,
+      click_count: Number(link.click_count),
+    })),
+    clicksByDay,
+  };
 }

@@ -61,3 +61,17 @@ export interface CountryStats {
   country: string | null;
   count: number;
 }
+
+export interface OverviewTopLinkRow {
+  id: number;
+  url: string;
+  click_count: number;
+}
+
+export interface OverviewStats {
+  todayClicks: number;
+  weekClicks: number;
+  totalLinks: number;
+  topLinks: OverviewTopLinkRow[];
+  clicksByDay: DayStats[];
+}
