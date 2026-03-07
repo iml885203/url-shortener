@@ -7,6 +7,11 @@ on:
 jobs:
   deploy-redirect:
     runs-on: ubuntu-latest
+    # Only deploy redirect when its code or shared code changes
+    if: >
+      contains(github.event.head_commit.message, 'redirect') ||
+      contains(github.event.head_commit.message, 'shared') ||
+      contains(github.event.head_commit.message, 'deploy-all')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
