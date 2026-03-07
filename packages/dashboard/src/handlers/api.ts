@@ -19,6 +19,7 @@ const PREVIEW_FETCH_TIMEOUT_MS = 8000;
 const PREVIEW_MAX_HTML_BYTES = 256 * 1024;
 const PREVIEW_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+const UPLOAD_MAX_BYTES = 1024 * 1024; // 1MB hard limit for OG images
 
 function authGuard(c: Context<{ Bindings: DashboardEnv }>): Response | null {
   if (!isAuthenticated(c)) {
@@ -368,8 +369,8 @@ export async function uploadImage(c: Context<{ Bindings: DashboardEnv }>): Promi
   const file = formData.get('image') as File | null;
   if (!file) return c.json({ error: 'image field is required' }, 400);
 
-  if (file.size > 5 * 1024 * 1024) {
-    return c.json({ error: 'Image must be 5MB or smaller' }, 400);
+  if (file.size > UPLOAD_MAX_BYTES) {
+    return c.json({ error: 'Image too large for social preview (max 1MB, recommend <= 600KB)' }, 400);
   }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];

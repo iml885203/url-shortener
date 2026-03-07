@@ -1,3 +1,5 @@
+import { optimizeOgImage } from '@/utils/image';
+
 const BASE = '/api';
 
 function getKey(): string {
@@ -128,9 +130,12 @@ export async function getOverviewStats(): Promise<OverviewStats> {
 }
 
 export async function uploadImage(linkId: number, file: File): Promise<string> {
+  const optimized = await optimizeOgImage(file);
+
   const form = new FormData();
-  form.append('image', file);
+  form.append('image', optimized);
   form.append('linkId', String(linkId));
+
   const res = await fetch(`${BASE}/upload`, {
     method: 'POST',
     headers: { 'X-API-Key': getKey() },
