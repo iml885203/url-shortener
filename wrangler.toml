@@ -29,5 +29,6 @@ bucket_name = "url-shortener-images"
 [vars]
 SHORT_BASE_URL = "https://go.dotw.me"
 R2_BASE_URL = "https://r2-go.dotw.me"
+DEFAULT_OG_IMAGE = "https://go.dotw.me/assets/og-default.png"
 
 # Set secrets via: wrangler secret put API_KEY

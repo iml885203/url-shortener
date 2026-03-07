@@ -10,10 +10,18 @@ import { dbGetLink, dbLogClick } from '../services/db';
 /**
  * Build an HTML response for crawlers with OG meta tags.
  */
-function buildOgHtml(targetUrl: string, data: KVLinkData, shortUrl: string): string {
-  const title = data.ogTitle ?? '';
-  const desc = data.ogDesc ?? '';
-  const image = data.ogImage ?? '';
+function buildOgHtml(targetUrl: string, data: KVLinkData, shortUrl: string, defaultOgImage: string): string {
+  const safeTargetUrl = (() => {
+    try {
+      return new URL(targetUrl);
+    } catch {
+      return null;
+    }
+  })();
+
+  const title = (data.ogTitle ?? '').trim() || safeTargetUrl?.hostname || targetUrl;
+  const desc = (data.ogDesc ?? '').trim();
+  const image = (data.ogImage ?? '').trim() || defaultOgImage;
 
   const escape = (s: string) =>
     s
@@ -26,9 +34,9 @@ function buildOgHtml(targetUrl: string, data: KVLinkData, shortUrl: string): str
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>${escape(title) || escape(targetUrl)}</title>
+  <title>${escape(title)}</title>
   <meta property="og:title" content="${escape(title)}" />
-  <meta property="og:description" content="${escape(desc)}" />
+  ${desc ? `<meta property="og:description" content="${escape(desc)}" />` : ''}
   ${image ? `<meta property="og:image" content="${escape(image)}" />` : ''}
   <meta property="og:url" content="${escape(shortUrl)}" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -74,11 +82,10 @@ export async function handleRedirect(c: Context<{ Bindings: Env }>): Promise<Res
       ogTitle: record.og_title,
       ogDesc: record.og_desc,
       ogImage: record.og_image,
+      ogEnabled: Boolean(record.og_enabled),
     };
     // Backfill KV cache on D1 hit
-    c.executionCtx.waitUntil(
-      kvSet(c.env.KV, id, linkData)
-    );
+    c.executionCtx.waitUntil(kvSet(c.env.KV, id, linkData));
   }
 
   const targetUrl = linkData.url;
@@ -103,11 +110,13 @@ export async function handleRedirect(c: Context<{ Bindings: Env }>): Promise<Res
     })()
   );
 
-  // 4. Crawlers with custom OG get HTML, otherwise everyone gets a redirect
-  const hasCustomOg = linkData.ogTitle || linkData.ogDesc || linkData.ogImage;
-  if (isCrawler(ua) && hasCustomOg) {
+  // 4. Crawlers with ogEnabled=true get HTML, everyone else gets a redirect
+  const legacyCustomOg = Boolean(linkData.ogTitle || linkData.ogDesc || linkData.ogImage);
+  const ogEnabled = typeof linkData.ogEnabled === 'boolean' ? linkData.ogEnabled : legacyCustomOg;
+
+  if (isCrawler(ua) && ogEnabled === true) {
     const shortUrl = `${c.env.SHORT_BASE_URL}/${slug}`;
-    const html = buildOgHtml(targetUrl, linkData, shortUrl);
+    const html = buildOgHtml(targetUrl, linkData, shortUrl, c.env.DEFAULT_OG_IMAGE);
     return c.html(html, 200);
   }
 

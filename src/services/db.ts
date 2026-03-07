@@ -39,15 +39,21 @@ export async function dbListLinks(db: D1Database): Promise<LinkWithStats[]> {
  */
 export async function dbCreateLink(
   db: D1Database,
-  data: { url: string; ogTitle?: string; ogDesc?: string; ogImage?: string }
+  data: { url: string; ogTitle?: string; ogDesc?: string; ogImage?: string; ogEnabled?: boolean }
 ): Promise<LinkRecord> {
   const result = await db
     .prepare(
-      `INSERT INTO links (url, og_title, og_desc, og_image)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO links (url, og_title, og_desc, og_image, og_enabled)
+       VALUES (?, ?, ?, ?, ?)
        RETURNING *`
     )
-    .bind(data.url, data.ogTitle ?? null, data.ogDesc ?? null, data.ogImage ?? null)
+    .bind(
+      data.url,
+      data.ogTitle ?? null,
+      data.ogDesc ?? null,
+      data.ogImage ?? null,
+      data.ogEnabled ? 1 : 0
+    )
     .first<LinkRecord>();
 
   if (!result) throw new Error('Failed to create link');
@@ -60,7 +66,13 @@ export async function dbCreateLink(
 export async function dbUpdateLink(
   db: D1Database,
   id: number,
-  data: { url?: string; ogTitle?: string | null; ogDesc?: string | null; ogImage?: string | null }
+  data: {
+    url?: string;
+    ogTitle?: string | null;
+    ogDesc?: string | null;
+    ogImage?: string | null;
+    ogEnabled?: boolean;
+  }
 ): Promise<LinkRecord | null> {
   const existing = await dbGetLink(db, id);
   if (!existing) return null;
@@ -69,15 +81,16 @@ export async function dbUpdateLink(
   const ogTitle = data.ogTitle !== undefined ? data.ogTitle : existing.og_title;
   const ogDesc = data.ogDesc !== undefined ? data.ogDesc : existing.og_desc;
   const ogImage = data.ogImage !== undefined ? data.ogImage : existing.og_image;
+  const ogEnabled = data.ogEnabled !== undefined ? (data.ogEnabled ? 1 : 0) : existing.og_enabled;
 
   const result = await db
     .prepare(
       `UPDATE links
-       SET url = ?, og_title = ?, og_desc = ?, og_image = ?, updated_at = datetime('now')
+       SET url = ?, og_title = ?, og_desc = ?, og_image = ?, og_enabled = ?, updated_at = datetime('now')
        WHERE id = ?
        RETURNING *`
     )
-    .bind(url, ogTitle, ogDesc, ogImage, id)
+    .bind(url, ogTitle, ogDesc, ogImage, ogEnabled, id)
     .first<LinkRecord>();
 
   return result ?? null;

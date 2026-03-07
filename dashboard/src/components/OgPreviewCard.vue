@@ -20,7 +20,7 @@
       <p v-if="description" class="text-xs text-gray-400 leading-relaxed line-clamp-2 pt-0.5">
         {{ description }}
       </p>
-      <p v-else class="text-xs text-gray-600 leading-relaxed pt-0.5 italic">
+      <p v-else-if="showDescriptionPlaceholder" class="text-xs text-gray-600 leading-relaxed pt-0.5 italic">
         Description will appear here
       </p>
     </div>
@@ -30,15 +30,23 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 
-const props = defineProps<{
-  title?: string;
-  description?: string;
-  imageUrl?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    title?: string;
+    description?: string;
+    imageUrl?: string;
+    showDescriptionPlaceholder?: boolean;
+  }>(),
+  {
+    showDescriptionPlaceholder: true,
+  }
+);
 
 // Reset error state when imageUrl changes so retries work
 const imgErrored = ref(false);
-watch(() => props.imageUrl, () => { imgErrored.value = false; });
+watch(() => props.imageUrl, () => {
+  imgErrored.value = false;
+});
 
 function onImgError() {
   imgErrored.value = true;

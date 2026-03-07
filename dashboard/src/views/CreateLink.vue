@@ -17,42 +17,58 @@
           />
         </div>
 
-        <!-- OG Title -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">OG Title</label>
+        <!-- OG Toggle -->
+        <label class="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-700/30 px-3 py-2.5">
+          <span class="text-sm font-medium text-gray-200">Use custom OG preview</span>
           <input
-            v-model="form.ogTitle"
-            type="text"
-            class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="Article title for social preview"
+            v-model="form.ogEnabled"
+            type="checkbox"
+            class="h-4 w-4 rounded border-gray-500 bg-gray-700 text-indigo-500 focus:ring-indigo-500"
           />
-        </div>
+        </label>
 
-        <!-- OG Description -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">OG Description</label>
-          <textarea
-            v-model="form.ogDesc"
-            rows="2"
-            class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="Description shown in social previews"
-          />
-        </div>
-
-        <!-- OG Image URL -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">OG Image URL</label>
-          <input
-            v-model="form.ogImage"
-            type="url"
-            class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="https://… (or upload after creating)"
-          />
-        </div>
-
-        <p class="text-xs text-gray-500">
-          💡 To upload an OG image, create the link first, then edit it to upload.
+        <p v-if="!form.ogEnabled" class="text-sm text-gray-400">
+          Will use destination website preview
         </p>
+
+        <template v-if="form.ogEnabled">
+          <!-- OG Title -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">OG Title</label>
+            <input
+              v-model="form.ogTitle"
+              type="text"
+              class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Article title for social preview"
+            />
+          </div>
+
+          <!-- OG Description -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">OG Description</label>
+            <textarea
+              v-model="form.ogDesc"
+              rows="2"
+              class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Description shown in social previews"
+            />
+          </div>
+
+          <!-- OG Image URL -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">OG Image URL</label>
+            <input
+              v-model="form.ogImage"
+              type="url"
+              class="block w-full rounded-md bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="https://… (or upload after creating)"
+            />
+          </div>
+
+          <p class="text-xs text-gray-500">
+            💡 To upload an OG image, create the link first, then edit it to upload.
+          </p>
+        </template>
 
         <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
 
@@ -71,10 +87,17 @@
       <!-- OG Preview Card -->
       <div class="w-full md:w-80 lg:w-96 flex-shrink-0 mt-6 md:mt-0">
         <p class="text-sm font-medium text-gray-400 mb-2">Preview</p>
+
+        <div v-if="!form.ogEnabled" class="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center text-sm text-gray-400">
+          Will use destination website preview
+        </div>
+
         <OgPreviewCard
-          :title="form.ogTitle"
-          :description="form.ogDesc"
-          :imageUrl="form.ogImage"
+          v-else
+          :title="previewTitle"
+          :description="previewDescription"
+          :imageUrl="previewImageUrl"
+          :showDescriptionPlaceholder="false"
         />
       </div>
     </div>
@@ -144,9 +167,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject } from 'vue';
+import { computed, inject, ref } from 'vue';
 import { createLink, type Link } from '@/api/client';
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
+
+const DEFAULT_OG_IMAGE = 'https://go.dotw.me/assets/og-default.png';
 
 const loading = ref(false);
 const error = ref('');
@@ -156,10 +181,24 @@ const showCopyToast = inject<() => void>('showCopyToast', () => {});
 
 const form = ref({
   url: '',
+  ogEnabled: false,
   ogTitle: '',
   ogDesc: '',
   ogImage: '',
 });
+
+const destinationHost = computed(() => {
+  if (!form.value.url) return 'destination website';
+  try {
+    return new URL(form.value.url).hostname;
+  } catch {
+    return 'destination website';
+  }
+});
+
+const previewTitle = computed(() => form.value.ogTitle.trim() || destinationHost.value);
+const previewDescription = computed(() => form.value.ogDesc.trim());
+const previewImageUrl = computed(() => form.value.ogImage.trim() || DEFAULT_OG_IMAGE);
 
 async function submit() {
   error.value = '';
@@ -167,6 +206,7 @@ async function submit() {
   try {
     const link = await createLink({
       url: form.value.url,
+      ogEnabled: form.value.ogEnabled,
       ogTitle: form.value.ogTitle || undefined,
       ogDesc: form.value.ogDesc || undefined,
       ogImage: form.value.ogImage || undefined,
@@ -181,7 +221,7 @@ async function submit() {
 
 function createAnother() {
   createdLink.value = null;
-  form.value = { url: '', ogTitle: '', ogDesc: '', ogImage: '' };
+  form.value = { url: '', ogEnabled: false, ogTitle: '', ogDesc: '', ogImage: '' };
   error.value = '';
 }
 

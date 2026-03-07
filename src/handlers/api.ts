@@ -24,7 +24,16 @@ function authGuard(c: Context<{ Bindings: Env }>): Response | null {
 }
 
 function buildLinkResponse(
-  link: { id: number; url: string; og_title?: string | null; og_desc?: string | null; og_image?: string | null; created_at?: string; updated_at?: string },
+  link: {
+    id: number;
+    url: string;
+    og_title?: string | null;
+    og_desc?: string | null;
+    og_image?: string | null;
+    og_enabled?: number;
+    created_at?: string;
+    updated_at?: string;
+  },
   baseUrl: string,
   extra: Record<string, unknown> = {}
 ) {
@@ -36,6 +45,7 @@ function buildLinkResponse(
     ogTitle: link.og_title ?? null,
     ogDesc: link.og_desc ?? null,
     ogImage: link.og_image ?? null,
+    ogEnabled: Boolean(link.og_enabled),
     createdAt: link.created_at,
     updatedAt: link.updated_at,
     ...extra,
@@ -52,9 +62,7 @@ export async function listLinks(c: Context<{ Bindings: Env }>): Promise<Response
   const links = await dbListLinks(c.env.DB);
   const baseUrl = c.env.SHORT_BASE_URL;
 
-  return c.json(
-    links.map((l) => buildLinkResponse(l, baseUrl, { clickCount: l.click_count }))
-  );
+  return c.json(links.map((l) => buildLinkResponse(l, baseUrl, { clickCount: l.click_count })));
 }
 
 /**
@@ -64,7 +72,13 @@ export async function createLink(c: Context<{ Bindings: Env }>): Promise<Respons
   const denied = authGuard(c);
   if (denied) return denied;
 
-  let body: { url?: string; ogTitle?: string; ogDesc?: string; ogImage?: string };
+  let body: {
+    url?: string;
+    ogTitle?: string;
+    ogDesc?: string;
+    ogImage?: string;
+    ogEnabled?: boolean;
+  };
   try {
     body = await c.req.json();
   } catch {
@@ -73,6 +87,10 @@ export async function createLink(c: Context<{ Bindings: Env }>): Promise<Respons
 
   if (!body.url || !body.url.trim()) {
     return c.json({ error: 'url is required' }, 400);
+  }
+
+  if (body.ogEnabled !== undefined && typeof body.ogEnabled !== 'boolean') {
+    return c.json({ error: 'ogEnabled must be a boolean' }, 400);
   }
 
   try {
@@ -89,6 +107,7 @@ export async function createLink(c: Context<{ Bindings: Env }>): Promise<Respons
     ogTitle: body.ogTitle,
     ogDesc: body.ogDesc,
     ogImage: body.ogImage,
+    ogEnabled: body.ogEnabled ?? false,
   });
 
   // Update KV cache
@@ -97,6 +116,7 @@ export async function createLink(c: Context<{ Bindings: Env }>): Promise<Respons
     ogTitle: link.og_title,
     ogDesc: link.og_desc,
     ogImage: link.og_image,
+    ogEnabled: Boolean(link.og_enabled),
   });
 
   return c.json(buildLinkResponse(link, c.env.SHORT_BASE_URL), 201);
@@ -112,7 +132,13 @@ export async function updateLink(c: Context<{ Bindings: Env }>): Promise<Respons
   const id = parseInt(c.req.param('id') ?? '', 10);
   if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
 
-  let body: { url?: string; ogTitle?: string | null; ogDesc?: string | null; ogImage?: string | null };
+  let body: {
+    url?: string;
+    ogTitle?: string | null;
+    ogDesc?: string | null;
+    ogImage?: string | null;
+    ogEnabled?: boolean;
+  };
   try {
     body = await c.req.json();
   } catch {
@@ -133,11 +159,16 @@ export async function updateLink(c: Context<{ Bindings: Env }>): Promise<Respons
     }
   }
 
+  if (body.ogEnabled !== undefined && typeof body.ogEnabled !== 'boolean') {
+    return c.json({ error: 'ogEnabled must be a boolean' }, 400);
+  }
+
   const updated = await dbUpdateLink(c.env.DB, id, {
     url: body.url,
     ogTitle: body.ogTitle,
     ogDesc: body.ogDesc,
     ogImage: body.ogImage,
+    ogEnabled: body.ogEnabled,
   });
 
   if (!updated) return c.json({ error: 'Link not found' }, 404);
@@ -148,6 +179,7 @@ export async function updateLink(c: Context<{ Bindings: Env }>): Promise<Respons
     ogTitle: updated.og_title,
     ogDesc: updated.og_desc,
     ogImage: updated.og_image,
+    ogEnabled: Boolean(updated.og_enabled),
   });
 
   return c.json(buildLinkResponse(updated, c.env.SHORT_BASE_URL));

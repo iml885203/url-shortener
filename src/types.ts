@@ -11,6 +11,7 @@ export interface Env {
   API_KEY: string;
   SHORT_BASE_URL: string;
   R2_BASE_URL: string;
+  DEFAULT_OG_IMAGE: string;
 }
 
 export interface LinkRecord {
@@ -19,6 +20,7 @@ export interface LinkRecord {
   og_title: string | null;
   og_desc: string | null;
   og_image: string | null;
+  og_enabled: number;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +30,7 @@ export interface KVLinkData {
   ogTitle: string | null;
   ogDesc: string | null;
   ogImage: string | null;
+  ogEnabled: boolean;
 }
 
 export interface ClickRecord {

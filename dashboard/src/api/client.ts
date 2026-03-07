@@ -27,6 +27,7 @@ export interface Link {
   ogTitle: string | null;
   ogDesc: string | null;
   ogImage: string | null;
+  ogEnabled: boolean;
   createdAt: string;
   updatedAt: string;
   clickCount?: number;
@@ -46,9 +47,7 @@ export async function verifyKey(key: string): Promise<boolean> {
 }
 
 export async function listLinks(): Promise<Link[]> {
-  return handleResponse<Link[]>(
-    await fetch(`${BASE}/links`, { headers: headers() })
-  );
+  return handleResponse<Link[]>(await fetch(`${BASE}/links`, { headers: headers() }));
 }
 
 export async function createLink(data: {
@@ -56,6 +55,7 @@ export async function createLink(data: {
   ogTitle?: string;
   ogDesc?: string;
   ogImage?: string;
+  ogEnabled?: boolean;
 }): Promise<Link> {
   return handleResponse<Link>(
     await fetch(`${BASE}/links`, {
@@ -68,7 +68,13 @@ export async function createLink(data: {
 
 export async function updateLink(
   id: number,
-  data: { url?: string; ogTitle?: string | null; ogDesc?: string | null; ogImage?: string | null }
+  data: {
+    url?: string;
+    ogTitle?: string | null;
+    ogDesc?: string | null;
+    ogImage?: string | null;
+    ogEnabled?: boolean;
+  }
 ): Promise<Link> {
   return handleResponse<Link>(
     await fetch(`${BASE}/links/${id}`, {
@@ -89,9 +95,7 @@ export async function deleteLink(id: number): Promise<void> {
 }
 
 export async function getLinkStats(id: number): Promise<Stats> {
-  return handleResponse<Stats>(
-    await fetch(`${BASE}/links/${id}/stats`, { headers: headers() })
-  );
+  return handleResponse<Stats>(await fetch(`${BASE}/links/${id}/stats`, { headers: headers() }));
 }
 
 export async function uploadImage(linkId: number, file: File): Promise<string> {
