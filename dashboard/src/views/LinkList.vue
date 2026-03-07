@@ -228,6 +228,6 @@ async function confirmDelete() {
 }
 
 function copyUrl(text: string) {
-  copyToClipboard(text).then((ok) => { if (ok) showCopyToast(); });
+  copyToClipboard(text).then(() => showCopyToast());
 }
 </script>
