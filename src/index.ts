@@ -33,12 +33,23 @@ app.post('/api/upload', uploadImage);
 // Root redirects to dashboard
 app.get('/', (c) => c.redirect('/dashboard/'));
 
-// Dashboard SPA — serve index.html for deep links (Vue Router history mode)
+// Dashboard SPA — try static asset first, fallback to index.html for SPA routing
 app.get('/dashboard/*', async (c) => {
   const assetsFetcher = c.env.ASSETS;
-  // Always serve index.html for SPA deep links
-  const res = await assetsFetcher.fetch(new Request(new URL('/index.html', c.req.url)));
-  return new Response(res.body, {
+  const path = new URL(c.req.url).pathname;
+
+  // Strip /dashboard prefix to match files in dist/
+  const assetPath = path.replace(/^\/dashboard/, '') || '/index.html';
+
+  // Try to serve the actual static file first
+  const assetRes = await assetsFetcher.fetch(new Request(new URL(assetPath, c.req.url)));
+  if (assetRes.status === 200 && assetPath !== '/index.html') {
+    return assetRes;
+  }
+
+  // Fallback: serve index.html for SPA deep links
+  const indexRes = await assetsFetcher.fetch(new Request(new URL('/index.html', c.req.url)));
+  return new Response(indexRes.body, {
     status: 200,
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
   });
