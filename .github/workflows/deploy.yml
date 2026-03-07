@@ -26,7 +26,12 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci
-      - run: cd packages/dashboard/frontend && npm run build
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: packages/dashboard/frontend
+      - name: Build frontend
+        run: node node_modules/vite/bin/vite.js build
+        working-directory: packages/dashboard/frontend
       - run: npx wrangler deploy
         working-directory: packages/dashboard
         env:
