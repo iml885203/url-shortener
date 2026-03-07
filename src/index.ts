@@ -8,6 +8,7 @@ import {
   updateLink,
   deleteLink,
   getLinkStats,
+  fetchOgPreview,
   uploadImage,
   getMe,
 } from './handlers/api';
@@ -29,6 +30,7 @@ app.put('/api/links/:id', updateLink);
 app.delete('/api/links/:id', deleteLink);
 app.get('/api/links/:id/stats', getLinkStats);
 app.post('/api/upload', uploadImage);
+app.post('/api/preview/fetch-og', fetchOgPreview);
 
 // Root redirects to dashboard
 app.get('/', (c) => c.redirect('/dashboard/'));

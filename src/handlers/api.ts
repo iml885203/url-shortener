@@ -16,11 +16,127 @@ import {
 } from '../services/db';
 import { r2Upload, r2Delete, r2KeyFromUrl } from '../services/r2';
 
+const PREVIEW_FETCH_TIMEOUT_MS = 8000;
+const PREVIEW_MAX_HTML_BYTES = 256 * 1024;
+const PREVIEW_USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
 function authGuard(c: Context<{ Bindings: Env }>): Response | null {
   if (!isAuthenticated(c)) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
   return null;
+}
+
+interface OgPreviewResponse {
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  domain: string;
+}
+
+function normalizeWhitespace(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'");
+}
+
+function readMetaContent(html: string, key: string): string | null {
+  const metaTagRegex = /<meta\s+[^>]*>/gi;
+  const attrRegex = /([^\s=/>]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g;
+  const target = key.toLowerCase();
+
+  let tagMatch: RegExpExecArray | null;
+  while ((tagMatch = metaTagRegex.exec(html)) !== null) {
+    const attrs = new Map<string, string>();
+    let attrMatch: RegExpExecArray | null;
+    while ((attrMatch = attrRegex.exec(tagMatch[0])) !== null) {
+      const attrName = attrMatch[1].toLowerCase();
+      const attrValue = attrMatch[3] ?? attrMatch[4] ?? attrMatch[5] ?? '';
+      attrs.set(attrName, attrValue);
+    }
+
+    const tagKey = (attrs.get('property') ?? attrs.get('name') ?? '').toLowerCase();
+    if (tagKey !== target) continue;
+
+    const content = normalizeWhitespace(decodeHtmlEntities(attrs.get('content') ?? ''));
+    if (content) return content;
+  }
+
+  return null;
+}
+
+function readTitleTag(html: string): string | null {
+  const match = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (!match?.[1]) return null;
+  const title = normalizeWhitespace(decodeHtmlEntities(match[1]));
+  return title || null;
+}
+
+function toAbsoluteUrl(value: string | null, baseUrl: string): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+async function readHtmlWithLimit(response: Response, maxBytes: number): Promise<string> {
+  if (!response.body) {
+    const text = await response.text();
+    return text.slice(0, maxBytes);
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (totalBytes < maxBytes) {
+      const { done, value } = await reader.read();
+      if (done || !value) break;
+
+      if (totalBytes + value.byteLength <= maxBytes) {
+        chunks.push(value);
+        totalBytes += value.byteLength;
+      } else {
+        const remaining = maxBytes - totalBytes;
+        if (remaining > 0) {
+          chunks.push(value.slice(0, remaining));
+          totalBytes += remaining;
+        }
+        break;
+      }
+    }
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return new TextDecoder().decode(bytes);
+}
+
+function emptyPreview(domain: string): OgPreviewResponse {
+  return {
+    title: null,
+    description: null,
+    image: null,
+    domain,
+  };
 }
 
 function buildLinkResponse(
@@ -271,6 +387,75 @@ export async function uploadImage(c: Context<{ Bindings: Env }>): Promise<Respon
   const url = await r2Upload(c.env.R2, key, buffer, file.type, r2BaseUrl);
 
   return c.json({ url });
+}
+
+/**
+ * POST /api/preview/fetch-og — fetch destination OG metadata
+ */
+export async function fetchOgPreview(c: Context<{ Bindings: Env }>): Promise<Response> {
+  const denied = authGuard(c);
+  if (denied) return denied;
+
+  let body: { url?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.url || !body.url.trim()) {
+    return c.json({ error: 'url is required' }, 400);
+  }
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(body.url.trim());
+  } catch {
+    return c.json({ error: 'Invalid URL' }, 400);
+  }
+
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+    return c.json({ error: 'URL must use http or https scheme' }, 400);
+  }
+
+  const domain = parsedUrl.hostname;
+  const fallback = emptyPreview(domain);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PREVIEW_FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(parsedUrl.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': PREVIEW_USER_AGENT,
+        Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    });
+
+    if (!response.ok) return c.json(fallback);
+
+    const html = await readHtmlWithLimit(response, PREVIEW_MAX_HTML_BYTES);
+    if (!html) return c.json(fallback);
+
+    const title = readMetaContent(html, 'og:title') ?? readTitleTag(html);
+    const description = readMetaContent(html, 'og:description');
+    const image = toAbsoluteUrl(readMetaContent(html, 'og:image'), parsedUrl.toString());
+
+    return c.json({
+      title: title || null,
+      description: description || null,
+      image: image || null,
+      domain,
+    } satisfies OgPreviewResponse);
+  } catch {
+    return c.json(fallback);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 /**

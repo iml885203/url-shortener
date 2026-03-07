@@ -122,17 +122,15 @@
       <div class="w-full md:w-80 lg:w-96 flex-shrink-0 mt-6 md:mt-0">
         <p class="text-sm font-medium text-gray-400 mb-2">Preview</p>
 
-        <div v-if="!form.ogEnabled" class="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center text-sm text-gray-400">
-          Will use destination website preview
-        </div>
-
         <OgPreviewCard
-          v-else
-          :title="previewTitle"
-          :description="previewDescription"
-          :imageUrl="previewImageUrl"
+          :title="cardTitle"
+          :description="cardDescription"
+          :imageUrl="cardImageUrl"
           :showDescriptionPlaceholder="false"
         />
+        <p v-if="!form.ogEnabled" class="text-xs text-gray-500 mt-2">
+          Preview from destination website
+        </p>
         <p v-if="uploadLoading" class="text-xs text-gray-500 mt-2 text-center">⏳ Uploading image…</p>
       </div>
     </div>
@@ -140,12 +138,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { listLinks, updateLink, uploadImage, type Link } from '@/api/client';
+import { fetchDestinationOgPreview, listLinks, updateLink, uploadImage, type DestinationOgPreview, type Link } from '@/api/client';
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
 
 const DEFAULT_OG_IMAGE = 'https://go.dotw.me/assets/og-default.png';
+const PREVIEW_UNAVAILABLE_DESC = 'Preview unavailable';
 
 const route = useRoute();
 const linkId = Number(route.params.id);
@@ -159,6 +158,10 @@ const saved = ref(false);
 const uploadLoading = ref(false);
 const uploadError = ref('');
 const localFilePreview = ref('');
+const destinationPreview = ref<DestinationOgPreview | null>(null);
+const destinationPreviewLoading = ref(false);
+const previewFetchSeq = ref(0);
+let previewDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const showCopyToast = inject<() => void>('showCopyToast', () => {});
 
@@ -182,6 +185,28 @@ const destinationHost = computed(() => {
 const previewTitle = computed(() => form.value.ogTitle.trim() || destinationHost.value);
 const previewDescription = computed(() => form.value.ogDesc.trim());
 const previewImageUrl = computed(() => localFilePreview.value || form.value.ogImage.trim() || DEFAULT_OG_IMAGE);
+const hasDestinationPreview = computed(() => {
+  const preview = destinationPreview.value;
+  return Boolean(preview?.title || preview?.description || preview?.image);
+});
+const destinationFallbackTitle = computed(() => destinationPreview.value?.domain || destinationHost.value);
+const destinationCardTitle = computed(() => {
+  if (destinationPreviewLoading.value) return 'Loading preview...';
+  return destinationPreview.value?.title || destinationFallbackTitle.value;
+});
+const destinationCardDescription = computed(() => {
+  if (destinationPreviewLoading.value) return 'Fetching destination metadata';
+  if (hasDestinationPreview.value) return destinationPreview.value?.description || '';
+  return PREVIEW_UNAVAILABLE_DESC;
+});
+const destinationCardImage = computed(() => {
+  if (destinationPreviewLoading.value) return null;
+  if (hasDestinationPreview.value) return destinationPreview.value?.image || null;
+  return null;
+});
+const cardTitle = computed(() => (form.value.ogEnabled ? previewTitle.value : destinationCardTitle.value));
+const cardDescription = computed(() => (form.value.ogEnabled ? previewDescription.value : destinationCardDescription.value));
+const cardImageUrl = computed(() => (form.value.ogEnabled ? previewImageUrl.value : destinationCardImage.value));
 
 onMounted(async () => {
   try {
@@ -206,10 +231,64 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  if (previewDebounceTimer) clearTimeout(previewDebounceTimer);
   if (localFilePreview.value) {
     URL.revokeObjectURL(localFilePreview.value);
   }
 });
+
+watch(
+  () => [form.value.url, form.value.ogEnabled] as const,
+  ([url, ogEnabled]) => {
+    if (previewDebounceTimer) clearTimeout(previewDebounceTimer);
+
+    if (ogEnabled) {
+      destinationPreviewLoading.value = false;
+      return;
+    }
+
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) {
+      destinationPreview.value = null;
+      destinationPreviewLoading.value = false;
+      return;
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(trimmedUrl);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        destinationPreview.value = null;
+        destinationPreviewLoading.value = false;
+        return;
+      }
+    } catch {
+      destinationPreview.value = null;
+      destinationPreviewLoading.value = false;
+      return;
+    }
+
+    previewDebounceTimer = setTimeout(async () => {
+      const seq = ++previewFetchSeq.value;
+      destinationPreviewLoading.value = true;
+      try {
+        const preview = await fetchDestinationOgPreview(parsed.toString());
+        if (seq === previewFetchSeq.value) {
+          destinationPreview.value = preview;
+        }
+      } catch {
+        if (seq === previewFetchSeq.value) {
+          destinationPreview.value = { title: null, description: null, image: null, domain: parsed.hostname };
+        }
+      } finally {
+        if (seq === previewFetchSeq.value) {
+          destinationPreviewLoading.value = false;
+        }
+      }
+    }, 500);
+  },
+  { immediate: true }
+);
 
 async function submit() {
   error.value = '';

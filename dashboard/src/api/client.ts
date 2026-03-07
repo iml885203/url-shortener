@@ -39,6 +39,13 @@ export interface Stats {
   byCountry: { country: string | null; count: number }[];
 }
 
+export interface DestinationOgPreview {
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  domain: string;
+}
+
 export async function verifyKey(key: string): Promise<boolean> {
   const res = await fetch(`${BASE}/me`, {
     headers: { 'X-API-Key': key },
@@ -109,4 +116,14 @@ export async function uploadImage(linkId: number, file: File): Promise<string> {
   });
   const data = await handleResponse<{ url: string }>(res);
   return data.url;
+}
+
+export async function fetchDestinationOgPreview(url: string): Promise<DestinationOgPreview> {
+  return handleResponse<DestinationOgPreview>(
+    await fetch(`${BASE}/preview/fetch-og`, {
+      method: 'POST',
+      headers: headers({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ url }),
+    })
+  );
 }
