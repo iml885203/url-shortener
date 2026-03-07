@@ -34,22 +34,6 @@ export async function dbGetLink(db: D1Database, id: number): Promise<LinkRecord 
   return result ?? null;
 }
 
-/**
- * Get all links with their total click count.
- */
-export async function dbListLinks(db: D1Database): Promise<LinkWithStats[]> {
-  const result = await db
-    .prepare(
-      `SELECT l.*, COUNT(c.id) as click_count
-       FROM links l
-       LEFT JOIN clicks c ON c.link_id = l.id
-       GROUP BY l.id
-       ORDER BY l.created_at DESC`
-    )
-    .all<LinkWithStats>();
-  return result.results ?? [];
-}
-
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
