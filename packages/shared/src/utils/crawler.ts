@@ -1,5 +1,5 @@
 const CRAWLER_RE =
-  /facebookexternalhit|Twitterbot|LinkedInBot|Discordbot|LINE|Slackbot|Googlebot|bingbot|WhatsApp|TelegramBot|Applebot|ia_archiver/i;
+  /facebookexternalhit|facebot|Twitterbot|LinkedInBot|linkedinbot|Discordbot|Slackbot|Slack-ImgProxy|SkypeUriPreview|WhatsApp|TelegramBot|Applebot|Googlebot|bingbot|DuckDuckBot|ia_archiver|crawler|bot/i;
 
 /**
  * Returns true if the User-Agent string looks like a social media crawler

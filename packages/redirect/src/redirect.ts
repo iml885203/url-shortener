@@ -94,9 +94,26 @@ export async function handleRedirect(c: Context<{ Bindings: RedirectEnv }>): Pro
   }
 
   const targetUrl = linkData.url;
-
-  // 3. Log click asynchronously
   const ua = c.req.header('User-Agent') ?? null;
+
+  // 3. OG response decision
+  // - crawler UA + OG enabled => return OG HTML
+  // - ?og=1 or ?og=true can force OG HTML for debugging/validation tools
+  const forceOg = (() => {
+    const raw = (c.req.query('og') ?? '').toLowerCase();
+    return raw === '1' || raw === 'true';
+  })();
+  const legacyCustomOg = Boolean(linkData.ogTitle || linkData.ogDesc || linkData.ogImage);
+  const ogEnabled = typeof linkData.ogEnabled === 'boolean' ? linkData.ogEnabled : legacyCustomOg;
+
+  if (ogEnabled && (forceOg || isCrawler(ua))) {
+    const shortUrl = `${c.env.SHORT_BASE_URL}/${slug}`;
+    const html = buildOgHtml(targetUrl, linkData, shortUrl, c.env.DEFAULT_OG_IMAGE);
+    return c.html(html, 200);
+  }
+
+  // 4. Real user redirect path only — log click asynchronously
+  // (crawler/forced OG preview requests are excluded from analytics)
   const referrer = c.req.header('Referer') ?? null;
   const cfData = (c.req.raw as unknown as { cf?: { country?: string } }).cf;
   const country = cfData?.country ?? null;
@@ -114,16 +131,6 @@ export async function handleRedirect(c: Context<{ Bindings: RedirectEnv }>): Pro
       });
     })()
   );
-
-  // 4. Crawlers with ogEnabled=true get HTML, everyone else gets a redirect
-  const legacyCustomOg = Boolean(linkData.ogTitle || linkData.ogDesc || linkData.ogImage);
-  const ogEnabled = typeof linkData.ogEnabled === 'boolean' ? linkData.ogEnabled : legacyCustomOg;
-
-  if (isCrawler(ua) && ogEnabled === true) {
-    const shortUrl = `${c.env.SHORT_BASE_URL}/${slug}`;
-    const html = buildOgHtml(targetUrl, linkData, shortUrl, c.env.DEFAULT_OG_IMAGE);
-    return c.html(html, 200);
-  }
 
   return c.redirect(targetUrl, 302);
 }
