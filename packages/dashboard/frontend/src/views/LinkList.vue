@@ -106,10 +106,11 @@
 
           <div class="mt-2 flex flex-wrap items-center gap-2">
             <a :href="link.shortUrl" target="_blank" class="tool-link font-mono text-xs">{{ link.shortUrl }}</a>
-            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share short URL for link ${link.id}`" @click="shareUrl(link.shortUrl, link.ogTitle)">
+            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy short URL for link ${link.id}`" @click="shareUrl(link.shortUrl, link.ogTitle)">
               <template #icon>
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m.75-3-3-3m0 0-3 3m3-3V15" />
+                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
               </template>
             </AppButton>
@@ -119,10 +120,11 @@
             <a :href="link.longUrl" target="_blank" :title="link.longUrl" class="max-w-[240px] truncate font-mono text-xs text-slate-400 transition-colors duration-200 hover:text-slate-200">
               {{ link.longUrl }}
             </a>
-            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
+            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
               <template #icon>
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m.75-3-3-3m0 0-3 3m3-3V15" />
+                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
               </template>
             </AppButton>
