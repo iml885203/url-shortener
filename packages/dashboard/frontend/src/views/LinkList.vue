@@ -59,7 +59,7 @@
           <AppCard variant="compact" class="bg-slate-950 px-3 py-2">
             <div class="mb-1 text-[11px] uppercase tracking-wide text-slate-400">Long URL</div>
             <div class="flex items-center gap-2">
-              <a :href="link.longUrl" target="_blank" class="min-w-0 flex-1 truncate font-mono text-xs text-slate-400 transition-colors duration-200 hover:text-slate-200">{{ link.longUrl }}</a>
+              <a :href="link.longUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-xs">{{ link.longUrl }}</a>
               <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
@@ -107,7 +107,7 @@
 
             <span class="text-slate-600">|</span>
 
-            <a :href="link.longUrl" target="_blank" :title="link.longUrl" class="max-w-[240px] truncate font-mono text-xs text-slate-400 transition-colors duration-200 hover:text-slate-200">
+            <a :href="link.longUrl" target="_blank" :title="link.longUrl" class="tool-link max-w-[240px] truncate font-mono text-xs">
               {{ link.longUrl }}
             </a>
             <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
