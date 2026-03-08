@@ -384,11 +384,7 @@ async function shareQrImage() {
       navigator.canShare({ files: [file] });
 
     if (canShareFiles) {
-      await navigator.share({
-        title: 'QR Code',
-        text: activeUrl,
-        files: [file],
-      });
+      await navigator.share({ files: [file] });
       return;
     }
 
