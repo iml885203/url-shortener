@@ -123,8 +123,7 @@
               </template>
               {{ saving ? 'Saving…' : 'Save Changes' }}
             </AppButton>
-            <AppButton type="button" variant="secondary" class="w-full sm:w-auto" @click="shareLink">Share</AppButton>
-            <AppButton type="button" variant="secondary" class="w-full sm:w-auto" @click="openQr">QR</AppButton>
+
             <AppButton to="/links" variant="secondary" class="w-full sm:w-auto">
               <template #icon>
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -159,41 +158,7 @@
       </div>
     </div>
 
-    <Teleport to="body">
-      <div v-if="qrModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" @click.self="closeQrModal">
-        <AppCard variant="elevated" class="w-full max-w-sm space-y-4">
-          <div>
-            <h2 class="tool-heading text-base font-semibold text-slate-100">QR Code</h2>
-          </div>
 
-          <div class="flex gap-1 rounded-md bg-slate-800 p-1">
-            <button
-              class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors"
-              :class="qrModal.activeType === 'short' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'"
-              @click="switchQrType('short')"
-            >Short</button>
-            <button
-              class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors"
-              :class="qrModal.activeType === 'long' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'"
-              @click="switchQrType('long')"
-            >Long</button>
-          </div>
-
-          <p class="text-center font-mono text-xs text-slate-400 select-all">{{ qrModal.activeType === 'short' ? qrModal.share.shortUrl : qrModal.share.longUrl }}</p>
-
-          <div class="overflow-hidden rounded-md border border-slate-800 bg-white p-3">
-            <img v-if="qrModal.loading" src="" alt="" class="mx-auto block h-64 w-64 animate-pulse bg-slate-100" />
-            <img v-else :src="qrModal.imageUrl" alt="QR code" class="mx-auto block h-64 w-64" />
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <AppButton type="button" variant="secondary" class="w-full" :disabled="qrModal.loading" @click="downloadQr">Download</AppButton>
-            <AppButton type="button" variant="secondary" class="w-full" :disabled="qrModal.loading" @click="shareQrImage">Share</AppButton>
-          </div>
-          <AppButton type="button" variant="ghost" class="w-full" @click="closeQrModal">Close</AppButton>
-        </AppCard>
-      </div>
-    </Teleport>
   </div>
 </template>
 
@@ -204,13 +169,10 @@ import { useRoute } from 'vue-router';
 import {
   fetchDestinationOgPreview,
   getLink,
-  getLinkShare,
-  getLinkQrBlob,
   updateLink,
   uploadImage,
   type DestinationOgPreview,
   type Link,
-  type LinkSharePayload,
 } from '@/api/client';
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
 import AppButton from '@/components/ui/AppButton.vue';
@@ -233,7 +195,6 @@ const uploadError = ref('');
 const uploadSuccess = ref(false);
 const localFilePreview = ref('');
 const destinationPreview = ref<DestinationOgPreview | null>(null);
-const qrModal = ref<{ activeType: 'short' | 'long'; imageUrl: string; blob: Blob; share: LinkSharePayload; loading: boolean } | null>(null);
 const destinationPreviewLoading = ref(false);
 const previewFetchSeq = ref(0);
 let previewDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -316,7 +277,6 @@ onBeforeUnmount(() => {
   if (localFilePreview.value) {
     URL.revokeObjectURL(localFilePreview.value);
   }
-  closeQrModal();
 });
 
 watch(
@@ -419,100 +379,6 @@ async function handleFileChange(evt: Event) {
     localFilePreview.value = '';
   } finally {
     uploadLoading.value = false;
-  }
-}
-
-async function shareLink() {
-  if (!link.value) return;
-  try {
-    const payload = await getLinkShare(link.value.id);
-
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      await navigator.share({
-        title: link.value.ogTitle || 'Shared link',
-        text: payload.shortShareText,
-        url: payload.shortUrl,
-      });
-      return;
-    }
-
-    await copyToClipboard(payload.shortShareText);
-    showCopyToast();
-  } catch (e: unknown) {
-    if ((e as Error).name === 'AbortError') return;
-    alert((e as Error).message);
-  }
-}
-
-async function openQr() {
-  if (!link.value) return;
-  try {
-    const [share, blob] = await Promise.all([getLinkShare(link.value.id), getLinkQrBlob(link.value.id, 'short')]);
-    const imageUrl = URL.createObjectURL(blob);
-    closeQrModal();
-    qrModal.value = { activeType: 'short', imageUrl, blob, share, loading: false };
-  } catch (e: unknown) {
-    alert((e as Error).message);
-  }
-}
-
-async function switchQrType(type: 'short' | 'long') {
-  if (!qrModal.value || !link.value || qrModal.value.activeType === type) return;
-  qrModal.value.activeType = type;
-  qrModal.value.loading = true;
-  try {
-    const blob = await getLinkQrBlob(link.value.id, type);
-    if (qrModal.value.imageUrl) URL.revokeObjectURL(qrModal.value.imageUrl);
-    qrModal.value.imageUrl = URL.createObjectURL(blob);
-    qrModal.value.blob = blob;
-  } catch (e: unknown) {
-    alert((e as Error).message);
-  } finally {
-    if (qrModal.value) qrModal.value.loading = false;
-  }
-}
-
-function closeQrModal() {
-  if (qrModal.value) {
-    URL.revokeObjectURL(qrModal.value.imageUrl);
-  }
-  qrModal.value = null;
-}
-
-function downloadQr() {
-  if (!qrModal.value || !link.value) return;
-  const a = document.createElement('a');
-  a.href = qrModal.value.imageUrl;
-  a.download = `link-${link.value.id}-qr-${qrModal.value.activeType}.png`;
-  a.click();
-}
-
-async function shareQrImage() {
-  if (!qrModal.value) return;
-  const activeUrl = qrModal.value.activeType === 'short' ? qrModal.value.share.shortUrl : qrModal.value.share.longUrl;
-
-  try {
-    const file = new File([qrModal.value.blob], `link-${linkId}-qr-${qrModal.value.activeType}.png`, {
-      type: 'image/png',
-    });
-
-    const canShareFiles =
-      typeof navigator !== 'undefined' &&
-      typeof navigator.share === 'function' &&
-      typeof navigator.canShare === 'function' &&
-      navigator.canShare({ files: [file] });
-
-    if (canShareFiles) {
-      await navigator.share({ files: [file] });
-      return;
-    }
-
-    window.open(qrModal.value.imageUrl, '_blank', 'noopener,noreferrer');
-    await copyToClipboard(activeUrl);
-    showCopyToast();
-  } catch (e: unknown) {
-    if ((e as Error).name === 'AbortError') return;
-    alert((e as Error).message);
   }
 }
 
