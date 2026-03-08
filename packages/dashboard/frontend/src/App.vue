@@ -2,19 +2,20 @@
   <div class="tool-shell min-h-screen bg-slate-950 text-slate-100">
     <nav
       v-if="isLoggedIn"
-      class="flex items-center gap-4 border-b border-slate-800 bg-slate-900 px-4 py-3 sm:gap-6"
+      class="flex items-center gap-2 border-b border-slate-800 bg-slate-900 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3"
     >
-      <span class="tool-heading text-lg font-semibold text-slate-100">URL Shortener</span>
-      <AppButton to="/overview" :variant="tabVariant('overview')" class="h-9 px-3">Overview</AppButton>
-      <AppButton to="/links" :variant="tabVariant('links')" class="h-9 px-3">Links</AppButton>
-      <AppButton to="/links/new" :variant="tabVariant('create')" class="h-9 px-3">Create</AppButton>
-      <AppButton variant="ghost" class="ml-auto h-9 px-3" @click="logout">
+      <span class="tool-heading hidden text-lg font-semibold text-slate-100 sm:inline">URL Shortener</span>
+      <span class="tool-heading text-base font-semibold text-slate-100 sm:hidden">URLs</span>
+      <AppButton to="/overview" :variant="tabVariant('overview')" class="h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm">Overview</AppButton>
+      <AppButton to="/links" :variant="tabVariant('links')" class="h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm">Links</AppButton>
+      <AppButton to="/links/new" :variant="tabVariant('create')" class="h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm">Create</AppButton>
+      <AppButton variant="ghost" class="ml-auto h-8 w-8 px-0 sm:h-9 sm:w-auto sm:px-3" @click="logout" aria-label="Logout">
         <template #icon>
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
           </svg>
         </template>
-        Logout
+        <span class="hidden sm:inline">Logout</span>
       </AppButton>
     </nav>
 
