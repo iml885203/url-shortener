@@ -56,11 +56,10 @@
             <div class="mb-1 text-[11px] uppercase tracking-wide text-slate-400">Short URL</div>
             <div class="flex items-center gap-2">
               <a :href="link.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-xs">{{ link.shortUrl }}</a>
-              <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy short URL for link ${link.id}`" @click="copyUrl(link.shortUrl)">
+              <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share short URL for link ${link.id}`" @click="shareUrl(link.shortUrl, link.ogTitle)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m.75-3-3-3m0 0-3 3m3-3V15" />
                   </svg>
                 </template>
               </AppButton>
@@ -71,11 +70,10 @@
             <div class="mb-1 text-[11px] uppercase tracking-wide text-slate-400">Long URL</div>
             <div class="flex items-center gap-2">
               <a :href="link.longUrl" target="_blank" class="truncate font-mono text-xs text-slate-400 transition-colors duration-200 hover:text-slate-200">{{ link.longUrl }}</a>
-              <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy long URL for link ${link.id}`" @click="copyUrl(link.longUrl)">
+              <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m.75-3-3-3m0 0-3 3m3-3V15" />
                   </svg>
                 </template>
               </AppButton>
@@ -83,12 +81,11 @@
           </AppCard>
         </div>
 
-        <div class="grid grid-cols-3 gap-1.5 pt-1">
-          <AppButton type="button" variant="secondary" class="h-8 px-0 text-xs" @click="shareLink(link)">Share</AppButton>
+        <div class="grid grid-cols-4 gap-1.5 pt-1">
           <AppButton type="button" variant="secondary" class="h-8 px-0 text-xs" @click="openQr(link)">QR</AppButton>
           <AppButton :to="`/links/${link.id}/stats`" variant="secondary" class="h-8 px-0 text-xs">Stats</AppButton>
           <AppButton :to="`/links/${link.id}/edit`" variant="secondary" class="h-8 px-0 text-xs">Edit</AppButton>
-          <AppButton type="button" variant="danger" class="col-span-2 h-8 px-0 text-xs" @click="promptDelete(link)">Delete</AppButton>
+          <AppButton type="button" variant="danger" class="h-8 px-0 text-xs" @click="promptDelete(link)">Delete</AppButton>
         </div>
       </AppCard>
     </div>
@@ -109,11 +106,10 @@
 
           <div class="mt-2 flex flex-wrap items-center gap-2">
             <a :href="link.shortUrl" target="_blank" class="tool-link font-mono text-xs">{{ link.shortUrl }}</a>
-            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy short URL for link ${link.id}`" @click="copyUrl(link.shortUrl)">
+            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share short URL for link ${link.id}`" @click="shareUrl(link.shortUrl, link.ogTitle)">
               <template #icon>
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m.75-3-3-3m0 0-3 3m3-3V15" />
                 </svg>
               </template>
             </AppButton>
@@ -123,11 +119,10 @@
             <a :href="link.longUrl" target="_blank" :title="link.longUrl" class="max-w-[240px] truncate font-mono text-xs text-slate-400 transition-colors duration-200 hover:text-slate-200">
               {{ link.longUrl }}
             </a>
-            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy long URL for link ${link.id}`" @click="copyUrl(link.longUrl)">
+            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
               <template #icon>
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m.75-3-3-3m0 0-3 3m3-3V15" />
                 </svg>
               </template>
             </AppButton>
@@ -140,11 +135,10 @@
         </div>
 
         <div class="grid grid-cols-2 gap-1.5">
-          <AppButton type="button" variant="secondary" class="h-8 px-2.5 text-xs" @click="shareLink(link)">Share</AppButton>
           <AppButton type="button" variant="secondary" class="h-8 px-2.5 text-xs" @click="openQr(link)">QR</AppButton>
           <AppButton :to="`/links/${link.id}/stats`" variant="secondary" class="h-8 px-2.5 text-xs">Stats</AppButton>
           <AppButton :to="`/links/${link.id}/edit`" variant="secondary" class="h-8 px-2.5 text-xs">Edit</AppButton>
-          <AppButton type="button" variant="danger" class="col-span-2 h-8 px-2.5 text-xs" @click="promptDelete(link)">Delete</AppButton>
+          <AppButton type="button" variant="danger" class="h-8 px-2.5 text-xs" @click="promptDelete(link)">Delete</AppButton>
         </div>
       </div>
     </AppCard>
@@ -311,24 +305,13 @@ async function confirmDelete() {
   }
 }
 
-function copyUrl(text: string) {
-  copyToClipboard(text).then(() => showCopyToast());
-}
-
-async function shareLink(link: Link) {
+async function shareUrl(url: string, title?: string | null) {
   try {
-    const payload = await getLinkShare(link.id);
-
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      await navigator.share({
-        title: link.ogTitle || 'Shared link',
-        text: payload.shortShareText,
-        url: payload.shortUrl,
-      });
+      await navigator.share({ title: title || 'Shared link', url });
       return;
     }
-
-    await copyToClipboard(payload.shortShareText);
+    await copyToClipboard(url);
     showCopyToast();
   } catch (e: unknown) {
     if ((e as Error).name === 'AbortError') return;
