@@ -305,9 +305,13 @@ async function confirmDelete() {
   }
 }
 
+function isMobile(): boolean {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
 async function shareUrl(url: string, title?: string | null) {
   try {
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    if (isMobile() && typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       await navigator.share({ title: title || 'Shared link', url });
       return;
     }
