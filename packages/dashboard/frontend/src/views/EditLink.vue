@@ -161,21 +161,36 @@
 
     <Teleport to="body">
       <div v-if="qrModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" @click.self="closeQrModal">
-        <AppCard variant="elevated" class="w-full max-w-xl space-y-4">
+        <AppCard variant="elevated" class="w-full max-w-sm space-y-4">
           <div>
-            <h2 class="tool-heading text-base font-semibold text-slate-100">Share QR</h2>
-            <p class="mt-1 text-xs text-slate-400">Short + long URL QR image</p>
+            <h2 class="tool-heading text-base font-semibold text-slate-100">QR Code</h2>
           </div>
 
-          <div class="overflow-hidden rounded-md border border-slate-800 bg-white p-2">
-            <img :src="qrModal.imageUrl" alt="QR codes" class="mx-auto block max-h-[65vh] w-auto max-w-full" />
+          <div class="flex gap-1 rounded-md bg-slate-800 p-1">
+            <button
+              class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors"
+              :class="qrModal.activeType === 'short' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'"
+              @click="switchQrType('short')"
+            >Short</button>
+            <button
+              class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors"
+              :class="qrModal.activeType === 'long' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'"
+              @click="switchQrType('long')"
+            >Long</button>
           </div>
 
-          <div class="grid gap-2 sm:grid-cols-3">
-            <AppButton type="button" variant="secondary" class="w-full" @click="downloadQr">Download</AppButton>
-            <AppButton type="button" variant="secondary" class="w-full" @click="shareQrImage">Share image</AppButton>
-            <AppButton type="button" variant="ghost" class="w-full" @click="closeQrModal">Close</AppButton>
+          <p class="text-center font-mono text-xs text-slate-400 select-all">{{ qrModal.activeType === 'short' ? qrModal.share.shortUrl : qrModal.share.longUrl }}</p>
+
+          <div class="overflow-hidden rounded-md border border-slate-800 bg-white p-3">
+            <img v-if="qrModal.loading" src="" alt="" class="mx-auto block h-64 w-64 animate-pulse bg-slate-100" />
+            <img v-else :src="qrModal.imageUrl" alt="QR code" class="mx-auto block h-64 w-64" />
           </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <AppButton type="button" variant="secondary" class="w-full" :disabled="qrModal.loading" @click="downloadQr">Download</AppButton>
+            <AppButton type="button" variant="secondary" class="w-full" :disabled="qrModal.loading" @click="shareQrImage">Share</AppButton>
+          </div>
+          <AppButton type="button" variant="ghost" class="w-full" @click="closeQrModal">Close</AppButton>
         </AppCard>
       </div>
     </Teleport>
@@ -218,7 +233,7 @@ const uploadError = ref('');
 const uploadSuccess = ref(false);
 const localFilePreview = ref('');
 const destinationPreview = ref<DestinationOgPreview | null>(null);
-const qrModal = ref<{ imageUrl: string; blob: Blob; share: LinkSharePayload } | null>(null);
+const qrModal = ref<{ activeType: 'short' | 'long'; imageUrl: string; blob: Blob; share: LinkSharePayload; loading: boolean } | null>(null);
 const destinationPreviewLoading = ref(false);
 const previewFetchSeq = ref(0);
 let previewDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -432,12 +447,28 @@ async function shareLink() {
 async function openQr() {
   if (!link.value) return;
   try {
-    const [share, blob] = await Promise.all([getLinkShare(link.value.id), getLinkQrBlob(link.value.id)]);
+    const [share, blob] = await Promise.all([getLinkShare(link.value.id), getLinkQrBlob(link.value.id, 'short')]);
     const imageUrl = URL.createObjectURL(blob);
     closeQrModal();
-    qrModal.value = { imageUrl, blob, share };
+    qrModal.value = { activeType: 'short', imageUrl, blob, share, loading: false };
   } catch (e: unknown) {
     alert((e as Error).message);
+  }
+}
+
+async function switchQrType(type: 'short' | 'long') {
+  if (!qrModal.value || !link.value || qrModal.value.activeType === type) return;
+  qrModal.value.activeType = type;
+  qrModal.value.loading = true;
+  try {
+    const blob = await getLinkQrBlob(link.value.id, type);
+    if (qrModal.value.imageUrl) URL.revokeObjectURL(qrModal.value.imageUrl);
+    qrModal.value.imageUrl = URL.createObjectURL(blob);
+    qrModal.value.blob = blob;
+  } catch (e: unknown) {
+    alert((e as Error).message);
+  } finally {
+    if (qrModal.value) qrModal.value.loading = false;
   }
 }
 
@@ -452,15 +483,16 @@ function downloadQr() {
   if (!qrModal.value || !link.value) return;
   const a = document.createElement('a');
   a.href = qrModal.value.imageUrl;
-  a.download = `link-${link.value.id}-qr.png`;
+  a.download = `link-${link.value.id}-qr-${qrModal.value.activeType}.png`;
   a.click();
 }
 
 async function shareQrImage() {
   if (!qrModal.value) return;
+  const activeUrl = qrModal.value.activeType === 'short' ? qrModal.value.share.shortUrl : qrModal.value.share.longUrl;
 
   try {
-    const file = new File([qrModal.value.blob], `link-${linkId}-qr.png`, {
+    const file = new File([qrModal.value.blob], `link-${linkId}-qr-${qrModal.value.activeType}.png`, {
       type: 'image/png',
     });
 
@@ -472,15 +504,15 @@ async function shareQrImage() {
 
     if (canShareFiles) {
       await navigator.share({
-        title: 'QR for shared link',
-        text: qrModal.value.share.shortShareText,
+        title: 'QR Code',
+        text: activeUrl,
         files: [file],
       });
       return;
     }
 
     window.open(qrModal.value.imageUrl, '_blank', 'noopener,noreferrer');
-    await copyToClipboard(`${qrModal.value.share.shortUrl}\n${qrModal.value.share.longUrl}`);
+    await copyToClipboard(activeUrl);
     showCopyToast();
   } catch (e: unknown) {
     if ((e as Error).name === 'AbortError') return;

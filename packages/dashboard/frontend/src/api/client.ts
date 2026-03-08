@@ -113,8 +113,8 @@ export async function getLinkShare(id: number): Promise<LinkSharePayload> {
   );
 }
 
-export async function getLinkQrBlob(id: number): Promise<Blob> {
-  const res = await fetch(`${BASE}/links/${id}/qr`, { headers: headers() });
+export async function getLinkQrBlob(id: number, type: 'short' | 'long' = 'short'): Promise<Blob> {
+  const res = await fetch(`${BASE}/links/${id}/qr?type=${type}`, { headers: headers() });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error((body as { error: string }).error ?? res.statusText);

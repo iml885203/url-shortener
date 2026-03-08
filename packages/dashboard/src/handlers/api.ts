@@ -21,7 +21,7 @@ import {
   dbGetOverviewStats,
 } from '../services/db.js';
 import { r2Upload, r2Delete, r2KeyFromUrl } from '../services/r2.js';
-import { buildShareQrPng } from '../services/qr.js';
+import { buildQrPng } from '../services/qr.js';
 
 const PREVIEW_FETCH_TIMEOUT_MS = 8000;
 const PREVIEW_MAX_HTML_BYTES = 256 * 1024;
@@ -260,7 +260,7 @@ export async function getLinkShare(c: Context<{ Bindings: DashboardEnv }>): Prom
 }
 
 /**
- * GET /api/links/:id/qr — generated PNG with short + long QR codes
+ * GET /api/links/:id/qr?type=short|long — single QR code PNG (no text)
  */
 export async function getLinkQr(c: Context<{ Bindings: DashboardEnv }>): Promise<Response> {
   const denied = authGuard(c);
@@ -269,20 +269,26 @@ export async function getLinkQr(c: Context<{ Bindings: DashboardEnv }>): Promise
   const id = parseInt(c.req.param('id') ?? '', 10);
   if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
 
+  const type = (c.req.query('type') ?? 'short') as 'short' | 'long';
+  if (type !== 'short' && type !== 'long') {
+    return c.json({ error: 'type must be "short" or "long"' }, 400);
+  }
+
   const link = await dbGetLink(c.env.DB, id);
   if (!link) return c.json({ error: 'Link not found' }, 404);
 
-  const sharePayload = buildLinkSharePayload(link, c.env.SHORT_BASE_URL);
-  const png = buildShareQrPng([
-    { label: 'Short', value: sharePayload.shortUrl },
-    { label: 'Long', value: sharePayload.longUrl },
-  ]);
+  const baseUrl = c.env.SHORT_BASE_URL;
+  const url = type === 'short'
+    ? `${baseUrl}/${sqidsEncodeId(link.id)}`
+    : `${baseUrl}/${loganEncodeId(link.id)}`;
+
+  const png = buildQrPng(url);
 
   return new Response(png, {
     headers: {
       'Content-Type': 'image/png',
       'Cache-Control': 'private, max-age=300',
-      'Content-Disposition': `inline; filename="link-${id}-qr.png"`,
+      'Content-Disposition': `inline; filename="link-${id}-qr-${type}.png"`,
     },
   });
 }

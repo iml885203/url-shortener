@@ -12,7 +12,6 @@
     "@url-shortener/shared": "*",
     "fast-png": "^8.0.0",
     "hono": "^4.12.5",
-    "oled-font-5x7": "^1.0.3",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
