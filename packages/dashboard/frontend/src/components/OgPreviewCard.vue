@@ -24,7 +24,7 @@
     </div>
 
     <div class="space-y-1 px-3 py-3">
-      <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">go.dotw.me</p>
+      <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">{{ domain }}</p>
       <p class="text-sm font-semibold leading-snug text-slate-100">
         {{ title || 'Link title will appear here' }}
       </p>
@@ -39,7 +39,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { config } from '@/config';
+
+const domain = computed(() => {
+  try {
+    return new URL(config.baseUrl).hostname;
+  } catch {
+    return '';
+  }
+});
 
 const props = withDefaults(
   defineProps<{

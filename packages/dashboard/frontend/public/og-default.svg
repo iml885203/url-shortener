@@ -10,7 +10,7 @@
     <circle cx="140" cy="120" r="80"/>
     <circle cx="1080" cy="520" r="120"/>
   </g>
-  <text x="90" y="280" fill="#e5e7eb" font-family="Inter,system-ui,Segoe UI,Roboto,sans-serif" font-size="72" font-weight="700">go.dotw.me</text>
+  <text x="90" y="280" fill="#e5e7eb" font-family="Inter,system-ui,Segoe UI,Roboto,sans-serif" font-size="72" font-weight="700">Short · Fast · Free</text>
   <text x="90" y="350" fill="#9ca3af" font-family="Inter,system-ui,Segoe UI,Roboto,sans-serif" font-size="36">Short links, long vibes.</text>
   <rect x="90" y="410" width="320" height="64" rx="12" fill="#111827" stroke="#374151"/>
   <text x="118" y="452" fill="#93c5fd" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="28">/logan</text>

@@ -204,8 +204,9 @@ import { createLink, fetchDestinationOgPreview, type DestinationOgPreview, type 
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import AppCard from '@/components/ui/AppCard.vue';
+import { config } from '@/config';
 
-const DEFAULT_OG_IMAGE = 'https://go.dotw.me/assets/og-default.png';
+const DEFAULT_OG_IMAGE = computed(() => `${config.baseUrl}/dashboard/og-default.svg`);
 const PREVIEW_UNAVAILABLE_DESC = 'Preview unavailable';
 
 const loading = ref(false);
@@ -237,7 +238,7 @@ const destinationHost = computed(() => {
 
 const previewTitle = computed(() => form.value.ogTitle.trim() || destinationHost.value);
 const previewDescription = computed(() => form.value.ogDesc.trim());
-const previewImageUrl = computed(() => form.value.ogImage.trim() || DEFAULT_OG_IMAGE);
+const previewImageUrl = computed(() => form.value.ogImage.trim() || DEFAULT_OG_IMAGE.value);
 const hasDestinationPreview = computed(() => {
   const preview = destinationPreview.value;
   return Boolean(preview?.title || preview?.description || preview?.image);

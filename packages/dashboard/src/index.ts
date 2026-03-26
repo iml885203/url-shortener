@@ -19,11 +19,14 @@ import {
 const app = new Hono<{ Bindings: DashboardEnv }>();
 
 // CORS for dashboard
-app.use('/api/*', cors({
-  origin: ['http://localhost:5173', 'https://go.dotw.me'],
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
-}));
+app.use('/api/*', (c, next) => {
+  const allowed = [c.env.SHORT_BASE_URL, 'http://localhost:5173'].filter(Boolean) as string[];
+  return cors({
+    origin: (origin) => (allowed.includes(origin) ? origin : allowed[0]),
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  })(c, next);
+});
 
 // Admin API routes
 app.get('/api/me', getMe);
@@ -59,9 +62,12 @@ app.get('/dashboard/*', async (c) => {
     return assetRes;
   }
 
-  // Fallback: serve index.html for SPA deep links
+  // Fallback: serve index.html for SPA deep links, injecting runtime config
   const indexRes = await assetsFetcher.fetch(new Request(new URL('/index.html', c.req.url)));
-  return new Response(indexRes.body, {
+  const html = await indexRes.text();
+  const configScript = `<script>window.__CONFIG__ = { baseUrl: "${c.env.SHORT_BASE_URL ?? ''}" }<\/script>`;
+  const injectedHtml = html.replace('</head>', `${configScript}</head>`);
+  return new Response(injectedHtml, {
     status: 200,
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
   });

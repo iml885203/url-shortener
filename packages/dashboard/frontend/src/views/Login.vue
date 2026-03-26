@@ -6,12 +6,12 @@
 
     <!-- Boot sequence: logo drops from top -->
     <div class="boot-logo" :class="{ dropped: logoDropped, hidden: bootDone }">
-      <span class="logo-text">★ go.dotw.me ★</span>
+      <span class="logo-text">★ URL Shortener ★</span>
     </div>
 
     <!-- Main content fades in after boot -->
     <div class="main-content" :class="{ visible: contentVisible }">
-      <div class="title">★ go.dotw.me ★</div>
+      <div class="title">★ URL Shortener ★</div>
 
       <div class="spacer"></div>
 
