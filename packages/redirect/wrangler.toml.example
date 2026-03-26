@@ -1,0 +1,21 @@
+name = "url-shortener-redirect"
+main = "src/index.ts"
+compatibility_date = "2026-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "your-domain.com/*", zone_name = "your-domain.com" }
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "url-shortener"
+database_id = "your-d1-database-id"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "your-kv-namespace-id"
+
+[vars]
+SHORT_BASE_URL = "https://your-domain.com"
+DEFAULT_OG_IMAGE = "https://your-domain.com/dashboard/og-default.svg"
