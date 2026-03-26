@@ -33,6 +33,32 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci
+      - name: Write wrangler.toml
+        working-directory: packages/redirect
+        run: |
+          cat > wrangler.toml << 'EOF'
+          name = "url-shortener-redirect"
+          main = "src/index.ts"
+          compatibility_date = "2026-03-01"
+          compatibility_flags = ["nodejs_compat"]
+
+          routes = [
+            { pattern = "${{ secrets.SHORT_BASE_URL_HOST }}/*", zone_name = "${{ secrets.ZONE_NAME }}" }
+          ]
+
+          [[d1_databases]]
+          binding = "DB"
+          database_name = "url-shortener"
+          database_id = "${{ secrets.D1_DATABASE_ID }}"
+
+          [[kv_namespaces]]
+          binding = "KV"
+          id = "${{ secrets.KV_NAMESPACE_ID }}"
+
+          [vars]
+          SHORT_BASE_URL = "${{ secrets.SHORT_BASE_URL }}"
+          DEFAULT_OG_IMAGE = "${{ secrets.DEFAULT_OG_IMAGE }}"
+          EOF
       - run: npx wrangler deploy
         working-directory: packages/redirect
         env:
@@ -54,6 +80,44 @@ jobs:
       - name: Build frontend
         run: node node_modules/vite/bin/vite.js build
         working-directory: packages/dashboard/frontend
+      - name: Write wrangler.toml
+        working-directory: packages/dashboard
+        run: |
+          cat > wrangler.toml << 'EOF'
+          name = "url-shortener-dashboard"
+          main = "src/index.ts"
+          compatibility_date = "2026-03-01"
+          compatibility_flags = ["nodejs_compat"]
+
+          routes = [
+            { pattern = "${{ secrets.SHORT_BASE_URL_HOST }}/api/*", zone_name = "${{ secrets.ZONE_NAME }}" },
+            { pattern = "${{ secrets.SHORT_BASE_URL_HOST }}/dashboard/*", zone_name = "${{ secrets.ZONE_NAME }}" },
+          ]
+
+          [assets]
+          directory = "./frontend/dist"
+          binding = "ASSETS"
+
+          [[d1_databases]]
+          binding = "DB"
+          database_name = "url-shortener"
+          database_id = "${{ secrets.D1_DATABASE_ID }}"
+
+          [[kv_namespaces]]
+          binding = "KV"
+          id = "${{ secrets.KV_NAMESPACE_ID }}"
+
+          [[r2_buckets]]
+          binding = "R2"
+          bucket_name = "url-shortener-images"
+
+          [vars]
+          SHORT_BASE_URL = "${{ secrets.SHORT_BASE_URL }}"
+          R2_BASE_URL = "${{ secrets.R2_BASE_URL }}"
+          DEFAULT_OG_IMAGE = "${{ secrets.DEFAULT_OG_IMAGE }}"
+
+          # Set secrets via: wrangler secret put API_KEY
+          EOF
       - run: npx wrangler deploy
         working-directory: packages/dashboard
         env:
