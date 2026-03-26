@@ -1,262 +1,254 @@
-# URL Shortener — 技術架構文件
+# Architecture
 
-## 概述
+## Overview
 
-個人用短網址/長網址服務，支援自訂 OG meta、圖片上傳、點擊追蹤、後台管理。全部部署在 Cloudflare 免費方案上，零成本。
+go.dotw.me is a personal URL shortener deployed as a **Cloudflare Workers monorepo**. It uses two Workers, one D1 database, one KV namespace, and one R2 bucket — all on Cloudflare's free tier.
 
-## 兩種模式（同一個 ID）
+Every link gets two URLs simultaneously:
+- **Short** (Sqids-encoded): `go.dotw.me/Uk`
+- **Long** (Logan-encoded): `go.dotw.me/loοgan`
 
-每條連結在 DB 中有一個 auto-increment ID，同時可透過短網址和長網址存取：
+Both decode to the same integer ID and point to the same database record.
 
-### 短網址（Sqids 編碼）
-```
-go.logan.tw/Uk        ← ID 經 Sqids 編碼
-go.logan.tw/Lqj8a0    ← ID 較大時自動變長
-```
-- ID → Sqids encode → URL-safe 短字串
-- 可逆：decode 回 ID，不需要額外存 slug
-- 自動避免髒字
+---
 
-### 長網址（Logan 編碼）
-```
-go.logan.tw/loogan       ← ID 0（最短，2 個 o）
-go.logan.tw/loοgan       ← ID 1
-go.logan.tw/lᴏᴏᴏᴏgan    ← ID 255
-```
-- ID → base-4 → 4 種 Unicode `o` → 包上 `l...gan`
-- 肉眼看全是 `loooogan`
-
-### 同一條連結，兩個入口
-```
-go.logan.tw/Uk       ← 短網址
-go.logan.tw/loοgan   ← 長網址
-         ↓               ↓
-      Sqids.decode    Logan.decode
-         ↓               ↓
-        ID 1     ===    ID 1     → 同一筆 DB record
-```
-
-## 架構圖
+## System Diagram
 
 ```
-                         ┌─────────────────────┐
-                         │   Cloudflare DNS     │
-                         │   go.logan.tw        │
-                         └──────────┬──────────┘
+                         ┌─────────────────────────┐
+                         │     Cloudflare DNS       │
+                         │      go.dotw.me          │
+                         └──────────┬──────────────┘
                                     │
-                         ┌──────────▼──────────┐
-                         │   Cloudflare Worker  │
-                         │   (API + Redirect)   │
-                         └──┬───┬───┬───┬──────┘
-                            │   │   │   │
-                   ┌────────▼┐ ┌▼──┐│  ┌▼───────────┐
-                   │ KV Store│ │D1 ││  │ Pages (SPA) │
-                   │ (快取)  │ │   ││  │ (後台 UI)   │
-                   └─────────┘ └───┘│  └─────────────┘
-                                    │
-                              ┌─────▼─────┐
-                              │  R2 Bucket │
-                              │ (OG 圖片)  │
-                              └───────────┘
+          ┌─────────────────────────┼────────────────────────────┐
+          │                         │                            │
+┌─────────▼─────────┐     ┌────────▼──────────┐     ┌──────────▼────────┐
+│  Redirect Worker  │     │  Dashboard Worker  │     │   Pages Assets    │
+│  go.dotw.me/*     │     │  /api/* /dashboard │     │   (bundled with   │
+│  (packages/       │     │  (packages/        │     │    dashboard       │
+│   redirect)       │     │   dashboard)       │     │    worker)        │
+└──┬────────────────┘     └──┬─────────────────┘     └───────────────────┘
+   │                         │
+   │  ┌─────────┐            │  ┌────────────┐   ┌─────────────┐
+   └──► KV Cache│         ───┤  │ D1 Database│   │  R2 Bucket  │
+      └─────────┘            ├──► (links +   │   │  (OG images)│
+                             │  │  clicks)   │   └─────────────┘
+                             │  └────────────┘
+                             └──► KV Cache
+                                └──────────┘
 ```
 
-## 元件職責
+---
 
-### 1. Cloudflare Worker（核心）
+## Components
 
-#### Redirect 路徑 `GET /:slug`
+### Cloudflare Worker — Redirect (`packages/redirect`)
 
-1. 判斷 slug 類型：
-   - 符合 `/^l[oοоᴏ]{2,}gan$/` → Logan 編碼，decode → ID
-   - 其他 → Sqids decode → ID
-2. 用 ID 查連結：先查 KV 快取 → miss 查 D1
-3. 檢查 User-Agent：
-   - 爬蟲（LINE/FB/Discord/Twitter）→ 回 HTML with `<meta og:*>`
-   - 一般人 → `302 Found` redirect
-4. `waitUntil()` → 非同步寫 click log 到 D1
+Routes: `go.dotw.me/*`
 
-#### Admin API `/api/*`
+Handles all public URL resolution:
 
-| Method | Path | 說明 |
+1. **Slug detection** — checks if slug matches `LOGAN_PATTERN` (`/^l[oοоᴏ]{2,}gan$/u`); otherwise treats as Sqids.
+2. **Decode** — converts slug → integer ID via Logan or Sqids decoder.
+3. **Cache lookup** — checks KV store for `id` key; hit → skip D1.
+4. **D1 lookup** — on cache miss, queries `links` table by ID.
+5. **Crawler detection** — if User-Agent matches known bots (LINE, Discord, Telegram, Slack, Facebook, Twitter, etc.), returns an HTML page with `<meta og:*>` tags and a `<meta http-equiv="refresh">` redirect.
+6. **User redirect** — returns `302 Found` to target URL.
+7. **Click logging** — uses `waitUntil()` to asynchronously insert into `clicks` table (non-blocking).
+
+### Cloudflare Worker — Dashboard (`packages/dashboard`)
+
+Routes: `go.dotw.me/api/*` and `go.dotw.me/dashboard/*`
+
+Serves the admin API (Hono framework) and the compiled Vue 3 SPA as static assets.
+
+**Admin API endpoints:**
+
+| Method | Path | Description |
 |---|---|---|
-| GET | `/api/links` | 列出所有連結（含 click 統計）|
-| POST | `/api/links` | 新增連結 |
-| PUT | `/api/links/:id` | 編輯（URL、OG meta）|
-| DELETE | `/api/links/:id` | 刪除 |
-| GET | `/api/links/:id/stats` | 點擊統計 |
-| POST | `/api/upload` | 上傳 OG 圖片到 R2 |
+| `GET` | `/api/links` | List all links with click counts |
+| `POST` | `/api/links` | Create a new link |
+| `PUT` | `/api/links/:id` | Update URL or OG meta |
+| `DELETE` | `/api/links/:id` | Delete a link |
+| `GET` | `/api/links/:id/stats` | Click stats (by day / referrer / country) |
+| `POST` | `/api/links/:id/og-toggle` | Toggle OG meta on/off |
+| `POST` | `/api/upload` | Upload OG image to R2 |
 
-驗證：API key（環境變數）
+Authentication: `API_KEY` secret (Wrangler secret), verified via `Authorization: Bearer <key>` header.
 
-### 2. KV Store（快取層）
+### D1 Database
 
-- **結構**：`key = ID`, `value = JSON { url, ogTitle, ogDesc, ogImage }`
-- **寫入**：Admin API 新增/編輯/刪除時同步更新
-- **讀取**：兩種模式都 decode 出 ID 後查 KV
+Cloudflare's serverless SQLite. Two tables:
 
-### 3. D1 Database
+- `links` — stores each link's URL and OG metadata.
+- `clicks` — append-only log of every redirect event.
+
+### KV Store
+
+Used as a read-through cache for the Redirect Worker:
+
+- **Key**: integer link ID (stringified)
+- **Value**: JSON with `{ url, ogTitle, ogDesc, ogImage, ogEnabled }`
+- **Written/invalidated** by the Dashboard Worker on create, update, or delete.
+
+The cache eliminates D1 reads on hot links, keeping latency low.
+
+### R2 Bucket
+
+Stores OG preview images uploaded via the Dashboard. Images are served from a public R2 custom domain (`r2-go.dotw.me`).
+
+### Dashboard SPA (Vue 3)
+
+A Vite-built single-page app served as static assets from the Dashboard Worker. Features:
+
+- Link list with short + long URL display and copy buttons
+- Create / edit links (URL + OG meta)
+- OG image upload with preview
+- Click statistics (daily trend, referrer breakdown, country breakdown)
+- API key login (stored in `localStorage`)
+
+Stack: Vue 3 + Vue Router + Vite + Tailwind CSS
+
+---
+
+## Database Schema
 
 ```sql
--- 連結主表
-CREATE TABLE links (
+-- Link table (from migrations/0001_init.sql + 0002_add_og_enabled.sql)
+CREATE TABLE IF NOT EXISTS links (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   url         TEXT NOT NULL,
   og_title    TEXT,
   og_desc     TEXT,
   og_image    TEXT,
+  og_enabled  INTEGER NOT NULL DEFAULT 0,
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- 點擊記錄
-CREATE TABLE clicks (
+-- Click log (append-only)
+CREATE TABLE IF NOT EXISTS clicks (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   link_id     INTEGER NOT NULL REFERENCES links(id) ON DELETE CASCADE,
   clicked_at  TEXT NOT NULL DEFAULT (datetime('now')),
   referrer    TEXT,
   country     TEXT,
   user_agent  TEXT,
-  ip_hash     TEXT
+  ip_hash     TEXT        -- SHA-256 of client IP; never plaintext
 );
 
-CREATE INDEX idx_clicks_link_id ON clicks(link_id);
-CREATE INDEX idx_clicks_link_time ON clicks(link_id, clicked_at);
+CREATE INDEX IF NOT EXISTS idx_clicks_link_id ON clicks(link_id);
+CREATE INDEX IF NOT EXISTS idx_clicks_link_time ON clicks(link_id, clicked_at);
 ```
 
-不需要 `type` 或 `slug` 欄位了 — 短/長都從 ID 算出來。
+No `slug` or `type` columns — both short and long slugs are computed from the auto-increment `id` at runtime.
 
-### 4. R2 Bucket（OG 圖片儲存）
+---
 
-- **免費額度**：10 GB 儲存、1,000 萬 reads/月、100 萬 writes/月
-- **上傳**：後台選圖 → Worker API → R2
-- **URL**：`https://r2.go.logan.tw/{id}/{filename}`
+## Dual Encoding
 
-### 5. Pages SPA（後台 UI）
+### Sqids (Short URLs)
 
-- 連結列表（顯示短網址 + 長網址 + click 數）
-- 新增連結（輸入目標 URL → 自動產生短/長兩種格式）
-- 編輯連結（URL、OG title/desc/image）
-- 上傳 OG 圖片
-- 點擊統計（按天/referrer/國家）
-- 驗證：輸入 API key
-- 框架：待定
-
-## 編碼規則
-
-### Sqids（短網址）
+Uses the [Sqids](https://sqids.org) library with a custom alphabet that excludes `l`, `g`, `a`, `n` to prevent collisions with the Logan pattern:
 
 ```
-依賴：sqids (npm)
-
-encode: ID → 短字串（如 "Uk"、"Lqj8a0"）
-decode: 短字串 → ID
-
-設定：
-  alphabet: 自訂（避免與 logan 編碼衝突）
-  minLength: 2（至少 2 字元）
+ALPHABET = 'bcdefhijkmopqrstuvwxyzBCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+minLength = 2
 ```
 
-### Logan（長網址）
-
 ```
-字元對照：
-  o  (U+006F) = 0
-  ο  (U+03BF) = 1
-  о  (U+043E) = 2
-  ᴏ  (U+1D0F) = 3
-
-encode:
-  1. ID → base-4 字串
-  2. padStart(2, '0')（至少 2 位）
-  3. 每位數替換為對應 Unicode o
-  4. 前加 'l'，後加 'gan'
-
-decode:
-  1. 去掉 'l' 和 'gan'
-  2. 每個 o → 0~3
-  3. base-4 字串 → parseInt → ID
-
-範例：
-  ID 0   → base4 "00" → "oo"     → "loogan"
-  ID 1   → base4 "01" → "oο"     → "loοgan"
-  ID 5   → base4 "11" → "οο"     → "lοοgan"
-  ID 15  → base4 "33" → "ᴏᴏ"     → "lᴏᴏgan"
-  ID 16  → base4 "100"→ "οoo"    → "lοoogan"
-  ID 255 → base4 "3333"→ "ᴏᴏᴏᴏ" → "lᴏᴏᴏᴏgan"
+encode(1)   → "Uk"
+encode(100) → "yB"
+encode(999) → "J8n"
 ```
 
-## 爬蟲偵測
+Decoding is deterministic and requires no database lookup for the slug itself.
 
-```javascript
-const CRAWLERS = /facebookexternalhit|Twitterbot|LinkedInBot|Discordbot|LINE|Slackbot|Googlebot|bingbot/i;
+### Logan (Long URLs)
+
+A custom codec that maps integer IDs to visually indistinguishable "loooogan"-style strings using four Unicode variants of the letter "o":
+
+| Digit | Character | Unicode |
+|---|---|---|
+| 0 | `o` | U+006F Latin small letter o |
+| 1 | `ο` | U+03BF Greek small letter omicron |
+| 2 | `о` | U+043E Cyrillic small letter o |
+| 3 | `ᴏ` | U+1D0F Latin letter small capital O |
+
+Algorithm:
+1. Convert ID to base-4 string
+2. Pad to minimum 2 digits
+3. Map each digit → Unicode o character
+4. Wrap: `l` + encoded + `gan`
+
+```
+ID 0   → base4 "00" → "oo"     → "loogan"
+ID 1   → base4 "01" → "oο"     → "loοgan"
+ID 5   → base4 "11" → "οο"     → "lοοgan"
+ID 15  → base4 "33" → "ᴏᴏ"     → "lᴏᴏgan"
+ID 255 → base4 "3333" → "ᴏᴏᴏᴏ" → "lᴏᴏᴏᴏgan"
 ```
 
-回傳 HTML：
+The Redirect Worker detects Logan slugs via regex: `/^l[oοоᴏ]{2,}gan$/u`
+
+---
+
+## Crawler Detection & OG Response
+
+The Redirect Worker uses a two-layer detection strategy (see `packages/shared/src/utils/crawler.ts`):
+
+1. **Explicit social preview keywords** — fast regex match against known preview bots:
+   - `facebookexternalhit`, `facebot`, `twitterbot`, `linkedinbot`
+   - `discordbot`, `slackbot`, `Slack-ImgProxy`, `SkypeUriPreview`
+   - `WhatsApp`, `TelegramBot`, `LINE`
+
+2. **`isbot` library** — maintained generic bot detection as a fallback baseline.
+
+When a crawler is detected and the link has `og_enabled = 1`, the Worker returns an HTML page instead of a 302:
+
 ```html
 <!DOCTYPE html>
 <html>
 <head>
-  <meta property="og:title" content="{title}" />
-  <meta property="og:description" content="{desc}" />
-  <meta property="og:image" content="{image}" />
-  <meta property="og:url" content="{網址}" />
+  <meta property="og:title" content="{og_title}" />
+  <meta property="og:description" content="{og_desc}" />
+  <meta property="og:image" content="{og_image}" />
+  <meta property="og:url" content="{short_url}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta http-equiv="refresh" content="0;url={目標 URL}" />
+  <meta http-equiv="refresh" content="0;url={target_url}" />
 </head>
 <body></body>
 </html>
 ```
 
-## 免費額度
+Human visitors always get a plain `302 Found`.
 
-| 資源 | 免費上限 | 每次 click | 日承載量 |
-|---|---|---|---|
-| Workers 請求 | 100,000/天 | 1 | 100,000 |
-| KV 讀取 | 100,000/天 | 1 | 100,000 |
-| D1 寫入 | 100,000/天 | 1（click log）| 100,000 |
-| D1 儲存 | 500 MB | ~200 bytes | ~250 萬筆 |
-| R2 儲存 | 10 GB | — | — |
-| R2 讀取 | 10,000,000/月 | 1（OG image）| — |
-| Pages | 無限部署 | — | — |
+---
 
-## 專案結構
+## Click Tracking & Privacy
 
-```
-url-shortener/
-├── ARCHITECTURE.md
-├── README.md
-├── wrangler.toml
-├── package.json
-├── tsconfig.json
-├── src/
-│   ├── index.ts             # Worker 進入點
-│   ├── router.ts            # 路由分發
-│   ├── handlers/
-│   │   ├── redirect.ts      # Redirect + 爬蟲偵測
-│   │   └── api.ts           # Admin CRUD + 上傳
-│   ├── services/
-│   │   ├── kv.ts            # KV 操作
-│   │   ├── db.ts            # D1 操作
-│   │   └── r2.ts            # R2 圖片操作
-│   ├── codec/
-│   │   ├── sqids.ts         # Sqids 短網址編解碼
-│   │   └── logan.ts         # Logan 長網址編解碼
-│   └── utils/
-│       ├── crawler.ts       # 爬蟲偵測
-│       └── auth.ts          # API key 驗證
-├── dashboard/               # Pages SPA（後台）
-│   └── ...
-├── migrations/
-│   └── 0001_init.sql
-└── scripts/
-    └── backup.sh
-```
+Click events are recorded asynchronously using Cloudflare Workers' `waitUntil()` — the redirect fires immediately and the D1 write happens in the background without adding latency.
 
-## 待決事項
+Each click record contains:
+- `link_id` — foreign key to `links`
+- `clicked_at` — UTC timestamp
+- `referrer` — from `Referer` header (may be null)
+- `country` — from `CF-IPCountry` header (Cloudflare geo)
+- `user_agent` — raw UA string
+- `ip_hash` — **SHA-256 hash of client IP** (never stored in plaintext)
 
-- [ ] 域名確認（`go.logan.tw` 或其他）
-- [ ] 後台框架選擇
-- [ ] R2 圖片 public access 方式
-- [ ] Click log 保留策略
-- [ ] Sqids alphabet 自訂（避免與 `l...gan` 格式衝突）
-- [ ] 是否需要 QR code 功能
+---
+
+## Cloudflare Free Tier Limits
+
+| Resource | Free Limit | Notes |
+|---|---|---|
+| Workers requests | 100,000/day | 1 per redirect |
+| KV reads | 100,000/day | 1 per redirect (cache hit skips D1) |
+| D1 reads | 5,000,000/day | Fallback on KV miss |
+| D1 writes | 100,000/day | 1 per click log |
+| D1 storage | 500 MB | ~200 bytes/click → ~2.5M records |
+| R2 storage | 10 GB | OG images only |
+| R2 reads | 10,000,000/month | Only on crawler requests |
+| R2 writes | 1,000,000/month | On image upload |
+| Pages deployments | Unlimited | SPA frontend |
