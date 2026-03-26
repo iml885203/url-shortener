@@ -52,7 +52,7 @@ Run this checklist when preview issues are reported:
 ## Debug entrypoint
 
 Use `?og=1` to force OG HTML for validation tools:
-- `https://go.dotw.me/<slug>?og=1`
+- `https://your-domain.com/<slug>?og=1`
 
 ## Source links
 
