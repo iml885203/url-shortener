@@ -13,46 +13,63 @@
 - **Click analytics** — by day, referrer, and country
 - **Zero cost** — runs entirely on Cloudflare free tier (Workers + D1 + KV + R2 + Pages)
 
+## Usage
+
+1. Open `https://your-domain.com/dashboard` and enter your API key
+2. Create a link — paste any URL, optionally set a custom slug
+3. Set a custom **OG title / description / image** so the link shows a rich preview when shared on LINE, Discord, Telegram, etc.
+4. View click stats per link — by day, referrer, and country
+
 ## Deploy
+
+### Option A: GitHub Actions (recommended)
+
+Fork this repo, then set the following GitHub Secrets in your fork:
+
+| Secret | Description |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers + D1 + KV + R2 permissions |
+| `SHORT_BASE_URL` | e.g. `https://your-domain.com` |
+| `SHORT_BASE_URL_HOST` | e.g. `your-domain.com` |
+| `ZONE_NAME` | Your Cloudflare zone, e.g. `your-domain.com` |
+| `D1_DATABASE_ID` | From `wrangler d1 create url-shortener` |
+| `KV_NAMESPACE_ID` | From `wrangler kv namespace create url-shortener-cache` |
+| `R2_BASE_URL` | e.g. `https://r2.your-domain.com` |
+| `DEFAULT_OG_IMAGE` | e.g. `https://your-domain.com/dashboard/og-default.svg` |
+
+Push to `main` — CI deploys automatically.
+
+### Option B: Manual
 
 ```bash
 git clone https://github.com/iml885203/url-shortener.git
 cd url-shortener
 npm install && cd packages/dashboard/frontend && npm install && cd ../../..
 
-# Create Cloudflare resources (D1, KV, R2) and fill in wrangler.toml
+# Copy and fill in wrangler config
 cp packages/redirect/wrangler.toml.example packages/redirect/wrangler.toml
 cp packages/dashboard/wrangler.toml.example packages/dashboard/wrangler.toml
 # Edit both files with your IDs and domain
 
+# Run DB migrations
 npx wrangler d1 execute url-shortener --file=migrations/0001_init.sql --remote
 npx wrangler d1 execute url-shortener --file=migrations/0002_add_og_enabled.sql --remote
 npx wrangler d1 execute url-shortener --file=migrations/0003_add_custom_slug.sql --remote
 
-cd packages/dashboard/frontend && npm run build && cd ../..
-npx wrangler deploy  # run in both packages/redirect and packages/dashboard
+# Build and deploy
+cd packages/dashboard/frontend && npm run build && cd ../../..
+cd packages/redirect && npx wrangler deploy && cd ..
+cd packages/dashboard && npx wrangler deploy
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full setup guide and system design.
-
-## Configuration
-
-Copy `.example` files and fill in your values:
-
-| Key | Description |
-|---|---|
-| `SHORT_BASE_URL` | Your public domain, e.g. `https://your-domain.com` |
-| `D1 database_id` | From `wrangler d1 create url-shortener` |
-| `KV id` | From `wrangler kv namespace create url-shortener-cache` |
-| `R2 bucket_name` | From `wrangler r2 bucket create url-shortener-images` |
-| `API_KEY` | Set via `wrangler secret put API_KEY` |
+See [ARCHITECTURE.md](ARCHITECTURE.md) for full system design details.
 
 ## Development
 
 ```bash
-npm test                    # unit tests
-cd packages/redirect && npx wrangler dev
-cd packages/dashboard/frontend && npm run dev  # frontend dev server
+npm test                                          # unit tests
+cd packages/redirect && npx wrangler dev          # redirect worker
+cd packages/dashboard/frontend && npm run dev     # frontend dev server
 ```
 
 ## License
