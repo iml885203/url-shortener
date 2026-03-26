@@ -244,8 +244,7 @@ url-shortener/
 │   │   ├── wrangler.toml
 │   │   └── src/
 │   │       ├── index.ts      # Worker entry point
-│   │       ├── redirect.ts   # Redirect + OG response logic
-│   │       └── db.ts         # D1 queries
+│   │       └── redirect.ts   # Redirect + OG response logic + D1 queries
 │   │
 │   └── dashboard/            # Dashboard Worker + SPA
 │       ├── wrangler.toml

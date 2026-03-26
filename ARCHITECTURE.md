@@ -71,10 +71,9 @@ Serves the admin API (Hono framework) and the compiled Vue 3 SPA as static asset
 | `PUT` | `/api/links/:id` | Update URL or OG meta |
 | `DELETE` | `/api/links/:id` | Delete a link |
 | `GET` | `/api/links/:id/stats` | Click stats (by day / referrer / country) |
-| `POST` | `/api/links/:id/og-toggle` | Toggle OG meta on/off |
 | `POST` | `/api/upload` | Upload OG image to R2 |
 
-Authentication: `API_KEY` secret (Wrangler secret), verified via `Authorization: Bearer <key>` header.
+Authentication: `API_KEY` secret (set via `wrangler secret put API_KEY`). Accepts either `Authorization: Bearer <key>` or `X-API-Key: <key>` header.
 
 ### D1 Database
 
