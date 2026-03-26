@@ -34,6 +34,8 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci
+      - name: Extract host from SHORT_BASE_URL
+        run: echo "URL_HOST=$(echo '${{ secrets.SHORT_BASE_URL }}' | sed 's|https\?://||')" >> $GITHUB_ENV
       - name: Write wrangler.toml
         working-directory: packages/redirect
         run: |
@@ -44,7 +46,7 @@ jobs:
           compatibility_flags = ["nodejs_compat"]
 
           routes = [
-            { pattern = "${{ secrets.SHORT_BASE_URL_HOST }}/*", zone_name = "${{ secrets.ZONE_NAME }}" }
+            { pattern = "${{ env.URL_HOST }}/*", zone_name = "${{ secrets.ZONE_NAME }}" }
           ]
 
           [[d1_databases]]
@@ -75,6 +77,8 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci
+      - name: Extract host from SHORT_BASE_URL
+        run: echo "URL_HOST=$(echo '${{ secrets.SHORT_BASE_URL }}' | sed 's|https\?://||')" >> $GITHUB_ENV
       - name: Install frontend dependencies
         run: npm install
         working-directory: packages/dashboard/frontend
@@ -91,8 +95,8 @@ jobs:
           compatibility_flags = ["nodejs_compat"]
 
           routes = [
-            { pattern = "${{ secrets.SHORT_BASE_URL_HOST }}/api/*", zone_name = "${{ secrets.ZONE_NAME }}" },
-            { pattern = "${{ secrets.SHORT_BASE_URL_HOST }}/dashboard/*", zone_name = "${{ secrets.ZONE_NAME }}" },
+            { pattern = "${{ env.URL_HOST }}/api/*", zone_name = "${{ secrets.ZONE_NAME }}" },
+            { pattern = "${{ env.URL_HOST }}/dashboard/*", zone_name = "${{ secrets.ZONE_NAME }}" },
           ]
 
           [assets]

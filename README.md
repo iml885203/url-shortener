@@ -30,7 +30,6 @@ Fork this repo, then set the following GitHub Secrets in your fork:
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers + D1 + KV + R2 permissions |
 | `SHORT_BASE_URL` | e.g. `https://your-domain.com` |
-| `SHORT_BASE_URL_HOST` | e.g. `your-domain.com` |
 | `ZONE_NAME` | Your Cloudflare zone, e.g. `your-domain.com` |
 | `D1_DATABASE_ID` | From `wrangler d1 create url-shortener` |
 | `KV_NAMESPACE_ID` | From `wrangler kv namespace create url-shortener-cache` |
