@@ -1,273 +1,64 @@
-# your-domain.com — Personal URL Shortener
+# URL Shortener
 
-> A serverless, zero-cost URL shortener with dual encoding, OG meta customization, and click analytics — running entirely on Cloudflare's free tier.
+> A free, serverless URL shortener built on Cloudflare. Zero infrastructure cost.
 
-<!-- Screenshot / Demo placeholder -->
-<!-- ![Demo](docs/screenshot.png) -->
+<!-- Screenshot placeholder -->
+<!-- ![Dashboard](docs/screenshot.png) -->
 
-## ✨ Features
+## Features
 
-- **Dual URL encoding** — short URLs (Sqids) and human-friendly long URLs (Logan encoding)
-- **Custom slugs** — set a memorable, branded path for any link (e.g. `/github`, `/blog`)
-- **OG meta customization** — set custom title, description, and image per link; toggle on/off
-- **OG image upload** — upload preview images directly to R2 storage
-- **Click analytics** — track clicks by day, referrer, and country
-- **Crawler detection** — serve OG HTML to LINE, Discord, Telegram, Slack, Facebook, Twitter, etc.
-- **IP privacy** — IPs are SHA-256 hashed before storage; never stored in plaintext
-- **Zero cost** — runs entirely on Cloudflare's free tier (Workers + D1 + KV + R2 + Pages)
+- **Dual URLs** — every link gets a short URL (`/Uk`) and a human-readable "loooogan" URL (`/loοgan`) — same link, two paths
+- **Custom slugs** — set a memorable path like `/github` or `/blog`
+- **OG meta** — custom title, description, and image per link; social preview for LINE, Discord, Telegram, etc.
+- **Click analytics** — by day, referrer, and country
+- **Zero cost** — runs entirely on Cloudflare free tier (Workers + D1 + KV + R2 + Pages)
 
----
+## Deploy
 
-## 🆓 Why Free?
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/iml885203/url-shortener)
 
-This project is designed to fit entirely within Cloudflare's generous free plan. Here's what each click consumes:
-
-| Resource | Free Limit | Usage per click |
-|---|---|---|
-| Workers requests | 100,000/day | 1 |
-| KV reads | 100,000/day | 1 |
-| D1 writes | 100,000/day | 1 (click log) |
-| D1 storage | 500 MB | ~200 bytes/click |
-| R2 storage | 10 GB | — |
-| R2 reads | 10,000,000/month | 1 (OG image, crawlers only) |
-| Pages deployments | Unlimited | — |
-
-At 100,000 clicks/day you hit the Workers and KV limits — well beyond personal use. D1 can hold ~2.5 million click records before hitting the storage cap.
-
----
-
-## 🏗️ Architecture
-
-```
-                         ┌─────────────────────────┐
-                         │     Cloudflare DNS       │
-                         │      your-domain.com          │
-                         └──────────┬──────────────┘
-                                    │
-              ┌─────────────────────┼──────────────────────┐
-              │                     │                      │
-   ┌──────────▼──────────┐  ┌───────▼────────┐   ┌────────▼────────┐
-   │  Redirect Worker    │  │ Dashboard API  │   │  Dashboard SPA  │
-   │  your-domain.com/*       │  │ /api/* Worker  │   │  /dashboard/*   │
-   │  (packages/         │  │ (packages/     │   │  (Vue 3 + Vite) │
-   │   redirect)         │  │  dashboard)    │   │                 │
-   └──┬──────────────────┘  └──┬─────────────┘   └─────────────────┘
-      │                        │
-      │  ┌────────┐            │  ┌────────┐  ┌────────────┐
-      └──► KV     │         ───┤  │   D1   │  │ R2 Bucket  │
-         │ Cache  │            ├──► Database│  │ OG Images  │
-         └────────┘            │  └────────┘  └────────────┘
-                               └──► KV
-                                  └────────┘
-```
-
-**Two Cloudflare Workers, one D1 database:**
-
-- **Redirect Worker** (`packages/redirect`) — handles `your-domain.com/*`. Decodes slugs, checks KV cache, queries D1, detects crawlers, issues 302 redirects, logs clicks asynchronously.
-- **Dashboard Worker** (`packages/dashboard`) — handles `your-domain.com/api/*` (CRUD API) and serves the SPA at `your-domain.com/dashboard/*`. Manages links, uploads, and analytics.
-- **Shared package** (`packages/shared`) — codec logic (Sqids + Logan), crawler detection, KV helpers, and types — imported by both Workers.
-
----
-
-## 🔗 Dual URL Encoding
-
-Every link gets **two URLs** pointing to the same database record — no extra storage needed.
-
-### Short URL (Sqids)
-
-Sqids encodes the integer ID into a URL-safe string using a custom alphabet (excludes `l`, `g`, `a`, `n` to avoid colliding with the Logan format):
-
-```
-ID 1   → "Uk"
-ID 100 → "yB"
-ID 999 → "J8n"
-```
-
-### Long URL (Logan encoding)
-
-The Logan codec maps each base-4 digit of the ID to one of four visually identical Unicode "o" characters, wrapped in `l...gan`:
-
-| Character | Unicode | Base-4 value |
-|---|---|---|
-| `o` | U+006F | 0 |
-| `ο` | U+03BF (Greek omicron) | 1 |
-| `о` | U+043E (Cyrillic o) | 2 |
-| `ᴏ` | U+1D0F (Small capital O) | 3 |
-
-```
-ID 0   → "loogan"      (looks like "loogan")
-ID 1   → "loοgan"      (looks like "loogan")
-ID 5   → "lοοgan"      (looks like "loogan")
-ID 255 → "lᴏᴏᴏᴏgan"   (looks like "looooogan")
-```
-
-Both URLs resolve to the same link — the Redirect Worker detects the pattern `/^l[oοоᴏ]{2,}gan$/` and routes accordingly.
-
----
-
-## 🚀 Self-Hosting
-
-### Prerequisites
-
-- Node.js 18+
-- Wrangler CLI: `npm install -g wrangler`
-- A Cloudflare account (free tier is sufficient)
-
-### 1. Clone
+Or manually:
 
 ```bash
-git clone https://github.com/your-username/url-shortener.git
+git clone https://github.com/iml885203/url-shortener.git
 cd url-shortener
+npm install && cd packages/dashboard/frontend && npm install && cd ../../..
+
+# Create Cloudflare resources (D1, KV, R2) and fill in wrangler.toml
+cp packages/redirect/wrangler.toml.example packages/redirect/wrangler.toml
+cp packages/dashboard/wrangler.toml.example packages/dashboard/wrangler.toml
+# Edit both files with your IDs and domain
+
+npx wrangler d1 execute url-shortener --file=migrations/0001_init.sql --remote
+npx wrangler d1 execute url-shortener --file=migrations/0002_add_og_enabled.sql --remote
+npx wrangler d1 execute url-shortener --file=migrations/0003_add_custom_slug.sql --remote
+
+cd packages/dashboard/frontend && npm run build && cd ../..
+npx wrangler deploy  # run in both packages/redirect and packages/dashboard
 ```
 
-### 2. Install
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full setup guide and system design.
 
-```bash
-npm install
-cd packages/dashboard/frontend && npm install && cd ../../..
-```
+## Configuration
 
-### 3. Create Cloudflare Resources
-
-```bash
-# Authenticate with Cloudflare
-wrangler login
-
-# Create a D1 database
-wrangler d1 create url-shortener
-
-# Create a KV namespace
-wrangler kv namespace create url-shortener-cache
-
-# Create an R2 bucket
-wrangler r2 bucket create url-shortener-images
-
-# Run DB migrations
-wrangler d1 execute url-shortener --file=migrations/0001_init.sql
-wrangler d1 execute url-shortener --file=migrations/0002_add_og_enabled.sql
-wrangler d1 execute url-shortener --file=migrations/0003_add_custom_slug.sql
-```
-
-### 4. Configure wrangler.toml
-
-Update `packages/redirect/wrangler.toml` and `packages/dashboard/wrangler.toml` with the IDs from step 3.
-
-**`packages/redirect/wrangler.toml`** — key settings:
+Copy `.example` files and fill in your values:
 
 | Key | Description |
 |---|---|
-| `routes[].pattern` | Your domain pattern, e.g. `your-domain.com/*` |
-| `routes[].zone_name` | Your Cloudflare zone, e.g. `example.com` |
-| `d1_databases[].database_id` | D1 database ID from `wrangler d1 create` |
-| `kv_namespaces[].id` | KV namespace ID from `wrangler kv namespace create` |
-| `vars.SHORT_BASE_URL` | Your public base URL, e.g. `https://your-domain.com` |
-| `vars.DEFAULT_OG_IMAGE` | Default OG image URL |
+| `SHORT_BASE_URL` | Your public domain, e.g. `https://your-domain.com` |
+| `D1 database_id` | From `wrangler d1 create url-shortener` |
+| `KV id` | From `wrangler kv namespace create url-shortener-cache` |
+| `R2 bucket_name` | From `wrangler r2 bucket create url-shortener-images` |
+| `API_KEY` | Set via `wrangler secret put API_KEY` |
 
-**`packages/dashboard/wrangler.toml`** — additional settings:
-
-| Key | Description |
-|---|---|
-| `r2_buckets[].bucket_name` | R2 bucket name |
-| `vars.R2_BASE_URL` | Public URL for R2 images |
-
-### 5. Set API Key Secret
+## Development
 
 ```bash
-# Set secret for dashboard worker (used to protect the API)
-cd packages/dashboard
-wrangler secret put API_KEY
+npm test                    # unit tests
+cd packages/redirect && npx wrangler dev
+cd packages/dashboard/frontend && npm run dev  # frontend dev server
 ```
 
-### 6. Deploy
-
-```bash
-# Build the frontend first
-cd packages/dashboard/frontend
-npm run build
-cd ../../..
-
-# Deploy redirect worker
-cd packages/redirect
-wrangler deploy
-cd ..
-
-# Deploy dashboard worker (serves API + SPA assets)
-cd packages/dashboard
-wrangler deploy
-```
-
----
-
-## 🧪 Development
-
-```bash
-# Run unit tests
-npm test
-
-# Watch mode
-npm run test:watch
-
-# Local dev (redirect worker)
-cd packages/redirect
-wrangler dev
-
-# Local dev (dashboard worker — requires frontend build first)
-cd packages/dashboard/frontend && npm run build && cd ..
-wrangler dev
-```
-
----
-
-## 📁 Project Structure
-
-```
-url-shortener/
-├── package.json              # Monorepo root (npm workspaces)
-├── tsconfig.json
-├── vitest.config.ts
-├── migrations/
-│   ├── 0001_init.sql         # links + clicks tables
-│   ├── 0002_add_og_enabled.sql
-│   └── 0003_add_custom_slug.sql
-├── tests/                    # Codec unit tests
-├── packages/
-│   ├── shared/               # Shared library
-│   │   └── src/
-│   │       ├── codec/
-│   │       │   ├── sqids.ts  # Short URL encoding (Sqids)
-│   │       │   └── logan.ts  # Long URL encoding (Logan)
-│   │       ├── services/
-│   │       │   └── kv.ts     # KV cache helpers
-│   │       ├── utils/
-│   │       │   ├── crawler.ts # Crawler/bot detection
-│   │       │   └── hash.ts   # IP hashing
-│   │       └── types.ts
-│   │
-│   ├── redirect/             # Redirect Worker
-│   │   ├── wrangler.toml
-│   │   └── src/
-│   │       ├── index.ts      # Worker entry point
-│   │       └── redirect.ts   # Redirect + OG response logic + D1 queries
-│   │
-│   └── dashboard/            # Dashboard Worker + SPA
-│       ├── wrangler.toml
-│       ├── src/
-│       │   ├── index.ts      # Worker entry point (Hono)
-│       │   ├── handlers/
-│       │   │   └── api.ts    # Admin CRUD + upload API
-│       │   └── services/
-│       │       ├── db.ts     # D1 operations
-│       │       ├── r2.ts     # R2 image operations
-│       │       └── qr.ts     # QR code generation
-│       └── frontend/         # Vue 3 + Vite SPA
-│           └── src/
-│               ├── views/    # Pages (LinkList, CreateLink, EditLink, Stats…)
-│               ├── api/      # API client
-│               └── components/
-```
-
----
-
-## 📄 License
+## License
 
 MIT © 2025 Logan
