@@ -1,4 +1,4 @@
-# go.example.com — Personal URL Shortener
+# your-domain.com — Personal URL Shortener
 
 > A serverless, zero-cost URL shortener with dual encoding, OG meta customization, and click analytics — running entirely on Cloudflare's free tier.
 
@@ -40,14 +40,14 @@ At 100,000 clicks/day you hit the Workers and KV limits — well beyond personal
 ```
                          ┌─────────────────────────┐
                          │     Cloudflare DNS       │
-                         │      go.example.com          │
+                         │      your-domain.com          │
                          └──────────┬──────────────┘
                                     │
               ┌─────────────────────┼──────────────────────┐
               │                     │                      │
    ┌──────────▼──────────┐  ┌───────▼────────┐   ┌────────▼────────┐
    │  Redirect Worker    │  │ Dashboard API  │   │  Dashboard SPA  │
-   │  go.example.com/*       │  │ /api/* Worker  │   │  /dashboard/*   │
+   │  your-domain.com/*       │  │ /api/* Worker  │   │  /dashboard/*   │
    │  (packages/         │  │ (packages/     │   │  (Vue 3 + Vite) │
    │   redirect)         │  │  dashboard)    │   │                 │
    └──┬──────────────────┘  └──┬─────────────┘   └─────────────────┘
@@ -62,8 +62,8 @@ At 100,000 clicks/day you hit the Workers and KV limits — well beyond personal
 
 **Two Cloudflare Workers, one D1 database:**
 
-- **Redirect Worker** (`packages/redirect`) — handles `go.example.com/*`. Decodes slugs, checks KV cache, queries D1, detects crawlers, issues 302 redirects, logs clicks asynchronously.
-- **Dashboard Worker** (`packages/dashboard`) — handles `go.example.com/api/*` (CRUD API) and serves the SPA at `go.example.com/dashboard/*`. Manages links, uploads, and analytics.
+- **Redirect Worker** (`packages/redirect`) — handles `your-domain.com/*`. Decodes slugs, checks KV cache, queries D1, detects crawlers, issues 302 redirects, logs clicks asynchronously.
+- **Dashboard Worker** (`packages/dashboard`) — handles `your-domain.com/api/*` (CRUD API) and serves the SPA at `your-domain.com/dashboard/*`. Manages links, uploads, and analytics.
 - **Shared package** (`packages/shared`) — codec logic (Sqids + Logan), crawler detection, KV helpers, and types — imported by both Workers.
 
 ---
@@ -154,11 +154,11 @@ Update `packages/redirect/wrangler.toml` and `packages/dashboard/wrangler.toml` 
 
 | Key | Description |
 |---|---|
-| `routes[].pattern` | Your domain pattern, e.g. `go.example.com/*` |
+| `routes[].pattern` | Your domain pattern, e.g. `your-domain.com/*` |
 | `routes[].zone_name` | Your Cloudflare zone, e.g. `example.com` |
 | `d1_databases[].database_id` | D1 database ID from `wrangler d1 create` |
 | `kv_namespaces[].id` | KV namespace ID from `wrangler kv namespace create` |
-| `vars.SHORT_BASE_URL` | Your public base URL, e.g. `https://go.example.com` |
+| `vars.SHORT_BASE_URL` | Your public base URL, e.g. `https://your-domain.com` |
 | `vars.DEFAULT_OG_IMAGE` | Default OG image URL |
 
 **`packages/dashboard/wrangler.toml`** — additional settings:

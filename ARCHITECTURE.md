@@ -2,11 +2,11 @@
 
 ## Overview
 
-go.example.com is a personal URL shortener deployed as a **Cloudflare Workers monorepo**. It uses two Workers, one D1 database, one KV namespace, and one R2 bucket — all on Cloudflare's free tier.
+your-domain.com is a personal URL shortener deployed as a **Cloudflare Workers monorepo**. It uses two Workers, one D1 database, one KV namespace, and one R2 bucket — all on Cloudflare's free tier.
 
 Every link gets two URLs simultaneously:
-- **Short** (Sqids-encoded): `go.example.com/Uk`
-- **Long** (Logan-encoded): `go.example.com/loοgan`
+- **Short** (Sqids-encoded): `your-domain.com/Uk`
+- **Long** (Logan-encoded): `your-domain.com/loοgan`
 
 Both decode to the same integer ID and point to the same database record.
 
@@ -17,14 +17,14 @@ Both decode to the same integer ID and point to the same database record.
 ```
                          ┌─────────────────────────┐
                          │     Cloudflare DNS       │
-                         │      go.example.com          │
+                         │      your-domain.com          │
                          └──────────┬──────────────┘
                                     │
           ┌─────────────────────────┼────────────────────────────┐
           │                         │                            │
 ┌─────────▼─────────┐     ┌────────▼──────────┐     ┌──────────▼────────┐
 │  Redirect Worker  │     │  Dashboard Worker  │     │   Pages Assets    │
-│  go.example.com/*     │     │  /api/* /dashboard │     │   (bundled with   │
+│  your-domain.com/*     │     │  /api/* /dashboard │     │   (bundled with   │
 │  (packages/       │     │  (packages/        │     │    dashboard       │
 │   redirect)       │     │   dashboard)       │     │    worker)        │
 └──┬────────────────┘     └──┬─────────────────┘     └───────────────────┘
@@ -44,7 +44,7 @@ Both decode to the same integer ID and point to the same database record.
 
 ### Cloudflare Worker — Redirect (`packages/redirect`)
 
-Routes: `go.example.com/*`
+Routes: `your-domain.com/*`
 
 Handles all public URL resolution:
 
@@ -58,7 +58,7 @@ Handles all public URL resolution:
 
 ### Cloudflare Worker — Dashboard (`packages/dashboard`)
 
-Routes: `go.example.com/api/*` and `go.example.com/dashboard/*`
+Routes: `your-domain.com/api/*` and `your-domain.com/dashboard/*`
 
 Serves the admin API (Hono framework) and the compiled Vue 3 SPA as static assets.
 
@@ -94,7 +94,7 @@ The cache eliminates D1 reads on hot links, keeping latency low.
 
 ### R2 Bucket
 
-Stores OG preview images uploaded via the Dashboard. Images are served from a public R2 custom domain (`r2-go.example.com`).
+Stores OG preview images uploaded via the Dashboard. Images are served from a public R2 custom domain (`r2.your-domain.com`).
 
 ### Dashboard SPA (Vue 3)
 
