@@ -2,8 +2,7 @@
 
 > A free, serverless URL shortener built on Cloudflare. Zero infrastructure cost.
 
-<!-- Screenshot placeholder -->
-<!-- ![Dashboard](docs/screenshot.png) -->
+![Dashboard](docs/screenshot.png)
 
 ## Features
 
