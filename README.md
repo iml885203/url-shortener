@@ -4,6 +4,12 @@
 
 ![Dashboard](docs/screenshot.png)
 
+```
+your-domain.com/Uk        ← short (Sqids)
+your-domain.com/loοgan    ← same link, looks identical to "loogan" (Logan encoding)
+your-domain.com/github    ← custom slug
+```
+
 ## Features
 
 - **Dual URLs** — every link gets a short URL (`/Uk`) and a human-readable "loooogan" URL (`/loοgan`) — same link, two paths
