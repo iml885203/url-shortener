@@ -9,6 +9,7 @@ import {
   sha256Hex,
   kvGet,
   kvSet,
+  kvGetCustomSlug,
 } from '@url-shortener/shared';
 import { dbGetLink, dbLogClick } from './db.js';
 
@@ -65,11 +66,18 @@ export async function handleRedirect(c: Context<{ Bindings: RedirectEnv }>): Pro
   }
 
   // 1. Decode slug to ID
+  // Resolution order: Logan pattern → custom slug (KV) → Sqids
   let id: number | null = null;
   if (LOGAN_PATTERN.test(slug)) {
     id = loganDecodeSlug(slug);
   } else {
-    id = sqidsDecodeSlug(slug);
+    // 2. Check custom slug in KV before trying Sqids
+    const customId = await kvGetCustomSlug(c.env.KV, slug);
+    if (customId !== null) {
+      id = customId;
+    } else {
+      id = sqidsDecodeSlug(slug);
+    }
   }
 
   if (id === null) {

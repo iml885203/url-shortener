@@ -5,6 +5,7 @@ export interface LinkRecord {
   og_desc: string | null;
   og_image: string | null;
   og_enabled: number;
+  custom_slug: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -15,6 +16,10 @@ export interface KVLinkData {
   ogDesc: string | null;
   ogImage: string | null;
   ogEnabled: boolean;
+}
+
+export interface KVCustomSlugPointer {
+  id: number;
 }
 
 export interface ClickRecord {

@@ -6,8 +6,11 @@ import {
   loganEncodeId,
   sqidsDecodeSlug,
   loganDecodeSlug,
+  LOGAN_PATTERN,
   kvSet,
   kvDelete,
+  kvSetCustomSlug,
+  kvDeleteCustomSlug,
 } from '@url-shortener/shared';
 import {
   dbListLinksPage,
@@ -147,6 +150,22 @@ function emptyPreview(domain: string): OgPreviewResponse {
   };
 }
 
+const CUSTOM_SLUG_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
+const CUSTOM_SLUG_RESERVED = new Set(['api', 'dashboard', 'assets']);
+
+function validateCustomSlug(slug: string): string | null {
+  if (!CUSTOM_SLUG_PATTERN.test(slug)) {
+    return 'Custom slug must be 1–64 characters and contain only letters, numbers, hyphens, or underscores';
+  }
+  if (CUSTOM_SLUG_RESERVED.has(slug.toLowerCase())) {
+    return `Custom slug "${slug}" is reserved`;
+  }
+  if (LOGAN_PATTERN.test(slug)) {
+    return `Custom slug "${slug}" conflicts with a reserved pattern`;
+  }
+  return null;
+}
+
 function buildLinkResponse(
   link: {
     id: number;
@@ -155,12 +174,18 @@ function buildLinkResponse(
     og_desc?: string | null;
     og_image?: string | null;
     og_enabled?: number;
+    custom_slug?: string | null;
     created_at?: string;
     updated_at?: string;
   },
   baseUrl: string,
   extra: Record<string, unknown> = {}
 ) {
+  const customSlug = link.custom_slug ?? null;
+  const customSlugFields = customSlug
+    ? { customSlug, customUrl: `${baseUrl}/${customSlug}` }
+    : {};
+
   return {
     id: link.id,
     url: link.url,
@@ -172,6 +197,7 @@ function buildLinkResponse(
     ogEnabled: Boolean(link.og_enabled),
     createdAt: link.created_at,
     updatedAt: link.updated_at,
+    ...customSlugFields,
     ...extra,
   };
 }
@@ -306,6 +332,7 @@ export async function createLink(c: Context<{ Bindings: DashboardEnv }>): Promis
     ogDesc?: string;
     ogImage?: string;
     ogEnabled?: boolean;
+    customSlug?: string;
   };
   try {
     body = await c.req.json();
@@ -330,13 +357,30 @@ export async function createLink(c: Context<{ Bindings: DashboardEnv }>): Promis
     return c.json({ error: 'Invalid URL' }, 400);
   }
 
-  const link = await dbCreateLink(c.env.DB, {
-    url: body.url,
-    ogTitle: body.ogTitle,
-    ogDesc: body.ogDesc,
-    ogImage: body.ogImage,
-    ogEnabled: body.ogEnabled ?? false,
-  });
+  // Validate custom slug if provided
+  const customSlug = body.customSlug?.trim() || undefined;
+  if (customSlug) {
+    const slugError = validateCustomSlug(customSlug);
+    if (slugError) return c.json({ error: slugError }, 400);
+  }
+
+  let link;
+  try {
+    link = await dbCreateLink(c.env.DB, {
+      url: body.url,
+      ogTitle: body.ogTitle,
+      ogDesc: body.ogDesc,
+      ogImage: body.ogImage,
+      ogEnabled: body.ogEnabled ?? false,
+      customSlug,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : '';
+    if (msg.includes('UNIQUE') && msg.includes('custom_slug')) {
+      return c.json({ error: 'Slug already taken' }, 409);
+    }
+    throw err;
+  }
 
   // Update KV cache
   await kvSet(c.env.KV, link.id, {
@@ -346,6 +390,11 @@ export async function createLink(c: Context<{ Bindings: DashboardEnv }>): Promis
     ogImage: link.og_image,
     ogEnabled: Boolean(link.og_enabled),
   });
+
+  // Set custom slug KV pointer
+  if (link.custom_slug) {
+    await kvSetCustomSlug(c.env.KV, link.custom_slug, link.id);
+  }
 
   return c.json(buildLinkResponse(link, c.env.SHORT_BASE_URL), 201);
 }
@@ -366,6 +415,7 @@ export async function updateLink(c: Context<{ Bindings: DashboardEnv }>): Promis
     ogDesc?: string | null;
     ogImage?: string | null;
     ogEnabled?: boolean;
+    customSlug?: string | null;
   };
   try {
     body = await c.req.json();
@@ -391,13 +441,45 @@ export async function updateLink(c: Context<{ Bindings: DashboardEnv }>): Promis
     return c.json({ error: 'ogEnabled must be a boolean' }, 400);
   }
 
-  const updated = await dbUpdateLink(c.env.DB, id, {
-    url: body.url,
-    ogTitle: body.ogTitle,
-    ogDesc: body.ogDesc,
-    ogImage: body.ogImage,
-    ogEnabled: body.ogEnabled,
-  });
+  // Validate custom slug if provided (non-null)
+  // null means "clear slug", undefined means "keep existing"
+  let customSlug: string | null | undefined = undefined;
+  if ('customSlug' in body) {
+    if (body.customSlug === null || body.customSlug === '') {
+      customSlug = null; // clear slug
+    } else if (typeof body.customSlug === 'string') {
+      const trimmed = body.customSlug.trim();
+      if (trimmed) {
+        const slugError = validateCustomSlug(trimmed);
+        if (slugError) return c.json({ error: slugError }, 400);
+        customSlug = trimmed;
+      } else {
+        customSlug = null; // empty string = clear
+      }
+    }
+  }
+
+  // Fetch existing link to get old custom_slug for KV cleanup
+  const existing = await dbGetLink(c.env.DB, id);
+  if (!existing) return c.json({ error: 'Link not found' }, 404);
+
+  let updated;
+  try {
+    updated = await dbUpdateLink(c.env.DB, id, {
+      url: body.url,
+      ogTitle: body.ogTitle,
+      ogDesc: body.ogDesc,
+      ogImage: body.ogImage,
+      ogEnabled: body.ogEnabled,
+      customSlug,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : '';
+    if (msg.includes('UNIQUE') && msg.includes('custom_slug')) {
+      return c.json({ error: 'Slug already taken' }, 409);
+    }
+    throw err;
+  }
 
   if (!updated) return c.json({ error: 'Link not found' }, 404);
 
@@ -409,6 +491,19 @@ export async function updateLink(c: Context<{ Bindings: DashboardEnv }>): Promis
     ogImage: updated.og_image,
     ogEnabled: Boolean(updated.og_enabled),
   });
+
+  // Sync custom slug KV pointers
+  const oldSlug = existing.custom_slug;
+  const newSlug = updated.custom_slug;
+
+  if (oldSlug && oldSlug !== newSlug) {
+    // Remove old slug pointer
+    await kvDeleteCustomSlug(c.env.KV, oldSlug);
+  }
+  if (newSlug && newSlug !== oldSlug) {
+    // Set new slug pointer
+    await kvSetCustomSlug(c.env.KV, newSlug, id);
+  }
 
   return c.json(buildLinkResponse(updated, c.env.SHORT_BASE_URL));
 }
@@ -439,6 +534,11 @@ export async function deleteLink(c: Context<{ Bindings: DashboardEnv }>): Promis
 
   // Invalidate KV cache
   await kvDelete(c.env.KV, id);
+
+  // Remove custom slug KV pointer if set
+  if (link?.custom_slug) {
+    await kvDeleteCustomSlug(c.env.KV, link.custom_slug);
+  }
 
   return c.json({ success: true });
 }

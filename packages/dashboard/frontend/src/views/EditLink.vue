@@ -9,6 +9,19 @@
       <form @submit.prevent="submit" class="flex-1 min-w-0">
         <AppCard class="space-y-5">
           <AppCard variant="compact" class="space-y-2 bg-slate-950 text-xs font-mono">
+            <div v-if="link!.customUrl" class="flex items-center gap-2">
+              <span class="w-14 flex-shrink-0 text-blue-400">Custom:</span>
+              <a :href="link!.customUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate">{{ link!.customUrl }}</a>
+              <AppButton type="button" variant="ghost" aria-label="Copy custom URL" class="h-9 w-9 px-0" @click="copyUrl(link!.customUrl!)">
+                <template #icon>
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </template>
+              </AppButton>
+            </div>
+
             <div class="flex items-center gap-2">
               <span class="w-14 flex-shrink-0 text-slate-400">Short:</span>
               <a :href="link!.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate">{{ link!.shortUrl }}</a>
@@ -64,6 +77,25 @@
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-200">Target URL <span class="text-red-400">*</span></label>
             <input v-model="form.url" type="url" required class="app-input" />
+          </div>
+
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-200">Custom Slug <span class="text-slate-400 font-normal">(optional — leave blank to clear)</span></label>
+            <div class="flex items-center">
+              <span class="flex h-10 items-center rounded-l-md border border-r-0 border-slate-700 bg-slate-900 px-3 text-xs text-slate-400 select-none">{{ baseUrlShort }}/</span>
+              <input
+                v-model="form.customSlug"
+                type="text"
+                class="app-input rounded-l-none"
+                placeholder="e.g. github"
+                maxlength="64"
+                @input="slugError = ''"
+              />
+            </div>
+            <p v-if="slugError" class="mt-1 text-xs text-red-400">{{ slugError }}</p>
+            <p v-else-if="form.customSlug.trim()" class="mt-1 text-xs" :class="slugValid ? 'text-green-400' : 'text-red-400'">
+              {{ slugValid ? `✓ ${baseUrl}/${form.customSlug.trim()}` : 'Only letters, numbers, hyphens, underscores (1–64 chars)' }}
+            </p>
           </div>
 
           <label class="flex cursor-pointer items-center justify-between rounded-md border border-slate-800 bg-slate-950 px-3 py-2.5">
@@ -179,8 +211,13 @@ import AppButton from '@/components/ui/AppButton.vue';
 import AppCard from '@/components/ui/AppCard.vue';
 import { config } from '@/config';
 
+const SLUG_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
+
 const DEFAULT_OG_IMAGE = computed(() => `${config.baseUrl}/dashboard/og-default.svg`);
 const PREVIEW_UNAVAILABLE_DESC = 'Preview unavailable';
+
+const baseUrl = config.baseUrl;
+const baseUrlShort = baseUrl.replace(/^https?:\/\//, '');
 
 const route = useRoute();
 const linkId = Number(route.params.id);
@@ -190,6 +227,7 @@ const loading = ref(true);
 const loadError = ref('');
 const saving = ref(false);
 const error = ref('');
+const slugError = ref('');
 const saved = ref(false);
 const uploadLoading = ref(false);
 const uploadError = ref('');
@@ -208,6 +246,12 @@ const form = ref({
   ogTitle: '',
   ogDesc: '',
   ogImage: '',
+  customSlug: '',
+});
+
+const slugValid = computed(() => {
+  const s = form.value.customSlug.trim();
+  return s.length > 0 && SLUG_PATTERN.test(s);
 });
 
 const destinationHost = computed(() => {
@@ -265,6 +309,7 @@ onMounted(async () => {
       ogTitle: link.value.ogTitle ?? '',
       ogDesc: link.value.ogDesc ?? '',
       ogImage: link.value.ogImage ?? '',
+      customSlug: link.value.customSlug ?? '',
     };
   } catch (e: unknown) {
     loadError.value = (e as Error).message;
@@ -335,7 +380,15 @@ watch(
 
 async function submit() {
   error.value = '';
+  slugError.value = '';
   saved.value = false;
+
+  const customSlug = form.value.customSlug.trim();
+  if (customSlug && !SLUG_PATTERN.test(customSlug)) {
+    slugError.value = 'Only letters, numbers, hyphens, underscores (1–64 chars)';
+    return;
+  }
+
   saving.value = true;
   try {
     const updated = await updateLink(linkId, {
@@ -344,12 +397,19 @@ async function submit() {
       ogTitle: form.value.ogTitle || null,
       ogDesc: form.value.ogDesc || null,
       ogImage: form.value.ogImage || null,
+      customSlug: customSlug || null, // empty string → null (clear slug)
     });
     link.value = updated;
+    form.value.customSlug = updated.customSlug ?? '';
     saved.value = true;
     setTimeout(() => (saved.value = false), 2000);
   } catch (e: unknown) {
-    error.value = (e as Error).message;
+    const msg = (e as Error).message;
+    if (msg === 'Slug already taken') {
+      slugError.value = 'This slug is already taken. Please choose another.';
+    } else {
+      error.value = msg;
+    }
   } finally {
     saving.value = false;
   }

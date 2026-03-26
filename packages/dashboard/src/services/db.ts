@@ -98,12 +98,12 @@ export async function dbListLinksPage(
  */
 export async function dbCreateLink(
   db: D1Database,
-  data: { url: string; ogTitle?: string; ogDesc?: string; ogImage?: string; ogEnabled?: boolean }
+  data: { url: string; ogTitle?: string; ogDesc?: string; ogImage?: string; ogEnabled?: boolean; customSlug?: string }
 ): Promise<LinkRecord> {
   const result = await db
     .prepare(
-      `INSERT INTO links (url, og_title, og_desc, og_image, og_enabled)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO links (url, og_title, og_desc, og_image, og_enabled, custom_slug)
+       VALUES (?, ?, ?, ?, ?, ?)
        RETURNING *`
     )
     .bind(
@@ -111,7 +111,8 @@ export async function dbCreateLink(
       data.ogTitle ?? null,
       data.ogDesc ?? null,
       data.ogImage ?? null,
-      data.ogEnabled ? 1 : 0
+      data.ogEnabled ? 1 : 0,
+      data.customSlug ?? null
     )
     .first<LinkRecord>();
 
@@ -131,6 +132,7 @@ export async function dbUpdateLink(
     ogDesc?: string | null;
     ogImage?: string | null;
     ogEnabled?: boolean;
+    customSlug?: string | null;
   }
 ): Promise<LinkRecord | null> {
   const existing = await dbGetLink(db, id);
@@ -141,15 +143,17 @@ export async function dbUpdateLink(
   const ogDesc = data.ogDesc !== undefined ? data.ogDesc : existing.og_desc;
   const ogImage = data.ogImage !== undefined ? data.ogImage : existing.og_image;
   const ogEnabled = data.ogEnabled !== undefined ? (data.ogEnabled ? 1 : 0) : existing.og_enabled;
+  // customSlug: undefined = keep existing, null = clear, string = set new
+  const customSlug = data.customSlug !== undefined ? data.customSlug : existing.custom_slug;
 
   const result = await db
     .prepare(
       `UPDATE links
-       SET url = ?, og_title = ?, og_desc = ?, og_image = ?, og_enabled = ?, updated_at = datetime('now')
+       SET url = ?, og_title = ?, og_desc = ?, og_image = ?, og_enabled = ?, custom_slug = ?, updated_at = datetime('now')
        WHERE id = ?
        RETURNING *`
     )
-    .bind(url, ogTitle, ogDesc, ogImage, ogEnabled, id)
+    .bind(url, ogTitle, ogDesc, ogImage, ogEnabled, customSlug, id)
     .first<LinkRecord>();
 
   return result ?? null;

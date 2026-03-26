@@ -8,6 +8,7 @@
 ## ✨ Features
 
 - **Dual URL encoding** — short URLs (Sqids) and human-friendly long URLs (Logan encoding)
+- **Custom slugs** — set a memorable, branded path for any link (e.g. `/github`, `/blog`)
 - **OG meta customization** — set custom title, description, and image per link; toggle on/off
 - **OG image upload** — upload preview images directly to R2 storage
 - **Click analytics** — track clicks by day, referrer, and country
@@ -144,6 +145,7 @@ wrangler r2 bucket create url-shortener-images
 # Run DB migrations
 wrangler d1 execute url-shortener --file=migrations/0001_init.sql
 wrangler d1 execute url-shortener --file=migrations/0002_add_og_enabled.sql
+wrangler d1 execute url-shortener --file=migrations/0003_add_custom_slug.sql
 ```
 
 ### 4. Configure wrangler.toml
@@ -225,7 +227,8 @@ url-shortener/
 ├── vitest.config.ts
 ├── migrations/
 │   ├── 0001_init.sql         # links + clicks tables
-│   └── 0002_add_og_enabled.sql
+│   ├── 0002_add_og_enabled.sql
+│   └── 0003_add_custom_slug.sql
 ├── tests/                    # Codec unit tests
 ├── packages/
 │   ├── shared/               # Shared library

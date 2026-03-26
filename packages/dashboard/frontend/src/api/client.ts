@@ -30,6 +30,8 @@ export interface Link {
   ogDesc: string | null;
   ogImage: string | null;
   ogEnabled: boolean;
+  customSlug?: string;
+  customUrl?: string;
   createdAt: string;
   updatedAt: string;
   clickCount?: number;
@@ -128,6 +130,7 @@ export async function createLink(data: {
   ogDesc?: string;
   ogImage?: string;
   ogEnabled?: boolean;
+  customSlug?: string;
 }): Promise<Link> {
   return handleResponse<Link>(
     await fetch(`${BASE}/links`, {
@@ -146,6 +149,7 @@ export async function updateLink(
     ogDesc?: string | null;
     ogImage?: string | null;
     ogEnabled?: boolean;
+    customSlug?: string | null;
   }
 ): Promise<Link> {
   return handleResponse<Link>(

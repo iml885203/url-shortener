@@ -48,13 +48,20 @@ Routes: `your-domain.com/*`
 
 Handles all public URL resolution:
 
-1. **Slug detection** — checks if slug matches `LOGAN_PATTERN` (`/^l[oοоᴏ]{2,}gan$/u`); otherwise treats as Sqids.
-2. **Decode** — converts slug → integer ID via Logan or Sqids decoder.
-3. **Cache lookup** — checks KV store for `id` key; hit → skip D1.
-4. **D1 lookup** — on cache miss, queries `links` table by ID.
-5. **Crawler detection** — if User-Agent matches known bots (LINE, Discord, Telegram, Slack, Facebook, Twitter, etc.), returns an HTML page with `<meta og:*>` tags and a `<meta http-equiv="refresh">` redirect.
-6. **User redirect** — returns `302 Found` to target URL.
-7. **Click logging** — uses `waitUntil()` to asynchronously insert into `clicks` table (non-blocking).
+**Redirect resolution order:**
+
+1. **Logan pattern** — if slug matches `LOGAN_PATTERN` (`/^l[oοоᴏ]{2,}gan$/u`), decode via Logan codec → link ID.
+2. **Custom slug** — look up `custom:{slug}` key in KV; hit → use stored link ID.
+3. **Sqids decode** — treat slug as Sqids-encoded ID.
+4. **404** — if no match found.
+
+**Then:**
+
+5. **Cache lookup** — checks KV store for `{id}` key; hit → skip D1.
+6. **D1 lookup** — on cache miss, queries `links` table by ID.
+7. **Crawler detection** — if User-Agent matches known bots (LINE, Discord, Telegram, Slack, Facebook, Twitter, etc.), returns an HTML page with `<meta og:*>` tags and a `<meta http-equiv="refresh">` redirect.
+8. **User redirect** — returns `302 Found` to target URL.
+9. **Click logging** — uses `waitUntil()` to asynchronously insert into `clicks` table (non-blocking).
 
 ### Cloudflare Worker — Dashboard (`packages/dashboard`)
 
@@ -84,11 +91,17 @@ Cloudflare's serverless SQLite. Two tables:
 
 ### KV Store
 
-Used as a read-through cache for the Redirect Worker:
+Used as a read-through cache for the Redirect Worker with two key namespaces:
 
-- **Key**: integer link ID (stringified)
-- **Value**: JSON with `{ url, ogTitle, ogDesc, ogImage, ogEnabled }`
+**Link data cache:**
+- **Key**: `{id}` (integer link ID stringified)
+- **Value**: JSON `{ url, ogTitle, ogDesc, ogImage, ogEnabled }`
 - **Written/invalidated** by the Dashboard Worker on create, update, or delete.
+
+**Custom slug pointers:**
+- **Key**: `custom:{slug}` (e.g. `custom:github`)
+- **Value**: JSON `{ id }` — pointer to the link ID
+- **Written** by Dashboard Worker when a custom slug is set; deleted when the slug is cleared or the link is deleted.
 
 The cache eliminates D1 reads on hot links, keeping latency low.
 
@@ -113,7 +126,7 @@ Stack: Vue 3 + Vue Router + Vite + Tailwind CSS
 ## Database Schema
 
 ```sql
--- Link table (from migrations/0001_init.sql + 0002_add_og_enabled.sql)
+-- Link table (from migrations/0001_init.sql + 0002_add_og_enabled.sql + 0003_add_custom_slug.sql)
 CREATE TABLE IF NOT EXISTS links (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   url         TEXT NOT NULL,
@@ -121,9 +134,12 @@ CREATE TABLE IF NOT EXISTS links (
   og_desc     TEXT,
   og_image    TEXT,
   og_enabled  INTEGER NOT NULL DEFAULT 0,
+  custom_slug TEXT UNIQUE,            -- optional branded slug (e.g. "github")
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_links_custom_slug ON links(custom_slug);
 
 -- Click log (append-only)
 CREATE TABLE IF NOT EXISTS clicks (
@@ -140,7 +156,7 @@ CREATE INDEX IF NOT EXISTS idx_clicks_link_id ON clicks(link_id);
 CREATE INDEX IF NOT EXISTS idx_clicks_link_time ON clicks(link_id, clicked_at);
 ```
 
-No `slug` or `type` columns — both short and long slugs are computed from the auto-increment `id` at runtime.
+Short and long slugs are computed from the auto-increment `id` at runtime. The optional `custom_slug` column enables user-defined branded paths like `/github` or `/blog`.
 
 ---
 
