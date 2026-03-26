@@ -1,4 +1,4 @@
-# go.dotw.me — Personal URL Shortener
+# go.example.com — Personal URL Shortener
 
 > A serverless, zero-cost URL shortener with dual encoding, OG meta customization, and click analytics — running entirely on Cloudflare's free tier.
 
@@ -40,14 +40,14 @@ At 100,000 clicks/day you hit the Workers and KV limits — well beyond personal
 ```
                          ┌─────────────────────────┐
                          │     Cloudflare DNS       │
-                         │      go.dotw.me          │
+                         │      go.example.com          │
                          └──────────┬──────────────┘
                                     │
               ┌─────────────────────┼──────────────────────┐
               │                     │                      │
    ┌──────────▼──────────┐  ┌───────▼────────┐   ┌────────▼────────┐
    │  Redirect Worker    │  │ Dashboard API  │   │  Dashboard SPA  │
-   │  go.dotw.me/*       │  │ /api/* Worker  │   │  /dashboard/*   │
+   │  go.example.com/*       │  │ /api/* Worker  │   │  /dashboard/*   │
    │  (packages/         │  │ (packages/     │   │  (Vue 3 + Vite) │
    │   redirect)         │  │  dashboard)    │   │                 │
    └──┬──────────────────┘  └──┬─────────────┘   └─────────────────┘
@@ -62,8 +62,8 @@ At 100,000 clicks/day you hit the Workers and KV limits — well beyond personal
 
 **Two Cloudflare Workers, one D1 database:**
 
-- **Redirect Worker** (`packages/redirect`) — handles `go.dotw.me/*`. Decodes slugs, checks KV cache, queries D1, detects crawlers, issues 302 redirects, logs clicks asynchronously.
-- **Dashboard Worker** (`packages/dashboard`) — handles `go.dotw.me/api/*` (CRUD API) and serves the SPA at `go.dotw.me/dashboard/*`. Manages links, uploads, and analytics.
+- **Redirect Worker** (`packages/redirect`) — handles `go.example.com/*`. Decodes slugs, checks KV cache, queries D1, detects crawlers, issues 302 redirects, logs clicks asynchronously.
+- **Dashboard Worker** (`packages/dashboard`) — handles `go.example.com/api/*` (CRUD API) and serves the SPA at `go.example.com/dashboard/*`. Manages links, uploads, and analytics.
 - **Shared package** (`packages/shared`) — codec logic (Sqids + Logan), crawler detection, KV helpers, and types — imported by both Workers.
 
 ---
