@@ -54,15 +54,16 @@ app.get('/dashboard/*', async (c) => {
   const path = new URL(c.req.url).pathname;
 
   // Strip /dashboard prefix to match files in dist/
-  const assetPath = path.replace(/^\/dashboard/, '') || '/index.html';
+  const assetPath = path.replace(/^\/dashboard/, '') || '/';
 
-  // Try to serve the actual static file first
-  const assetRes = await assetsFetcher.fetch(new Request(new URL(assetPath, c.req.url)));
-  if (assetRes.status === 200 && assetPath !== '/index.html') {
-    return assetRes;
+  // Try to serve static assets (JS, CSS, images etc.) — but not index.html
+  const isHtmlRoute = assetPath === '/' || assetPath === '/index.html' || !assetPath.includes('.');
+  if (!isHtmlRoute) {
+    const assetRes = await assetsFetcher.fetch(new Request(new URL(assetPath, c.req.url)));
+    if (assetRes.status === 200) return assetRes;
   }
 
-  // Fallback: serve index.html for SPA deep links, injecting runtime config
+  // Serve index.html with injected runtime config (for SPA routes and root)
   const indexRes = await assetsFetcher.fetch(new Request(new URL('/index.html', c.req.url)));
   const html = await indexRes.text();
   const configScript = `<script>window.__CONFIG__ = { baseUrl: "${c.env.SHORT_BASE_URL ?? ''}" }<\/script>`;
