@@ -15,10 +15,6 @@
 
 ## Deploy
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/iml885203/url-shortener)
-
-Or manually:
-
 ```bash
 git clone https://github.com/iml885203/url-shortener.git
 cd url-shortener
