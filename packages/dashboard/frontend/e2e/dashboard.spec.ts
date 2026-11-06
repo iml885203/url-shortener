@@ -36,6 +36,16 @@ for (const mode of ['light', 'dark']) {
       await page.goto('/dashboard/links');
       await expect(page.getByText(link.ogTitle).filter({ visible: true })).toBeVisible();
       await page.screenshot({ path: `test-results/links-${mode}-${width}.png`, fullPage: true });
+      const appearance = page.getByRole('combobox', { name: 'Appearance' });
+      await appearance.click();
+      await expect(page.getByRole('listbox')).toBeVisible();
+      const bounds = await page.getByRole('listbox').boundingBox();
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+      await page.screenshot({ path: `test-results/appearance-${mode}-${width}.png` });
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('listbox')).toHaveCount(0);
+      await expect(appearance).toBeFocused();
     }
   });
   test(`${mode}: token and optional SSO sign-in, logout and theme persistence`, async ({ page }) => {
@@ -52,7 +62,8 @@ for (const mode of ['light', 'dark']) {
     await page.getByLabel('API token', { exact: false }).fill('fixture-key');
     await page.getByRole('button', { name: 'Sign in with token' }).click();
     await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
-    await page.getByLabel('Appearance', { exact: true }).selectOption(mode === 'dark' ? 'light' : 'dark');
+    await page.getByRole('combobox', { name: 'Appearance', exact: true }).click();
+    await page.getByRole('option', { name: mode === 'dark' ? 'Light' : 'Dark', exact: true }).click();
     await page.reload();
     await expect(page.locator('html')).toHaveClass(mode === 'dark' ? /tool-theme(?!.*dark)/ : /dark/);
     await page.getByRole('button', { name: 'Logout', exact: true }).filter({ visible: true }).click();
