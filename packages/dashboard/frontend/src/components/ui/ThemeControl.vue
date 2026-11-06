@@ -7,7 +7,7 @@ function change() { theme.setPreference(preference.value); }
 </script>
 <template>
   <label class="theme-control">
-    <span>Appearance</span>
+    <span class="sr-only">Appearance</span>
     <select v-model="preference" @change="change" aria-label="Appearance">
       <option value="system">System</option>
       <option value="light">Light</option>

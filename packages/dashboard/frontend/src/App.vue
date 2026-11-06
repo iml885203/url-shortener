@@ -1,15 +1,16 @@
 <template>
   <div class="tool-shell min-h-screen bg-ui-canvas text-ui-ink">
-    <!-- Desktop top nav -->
-    <nav
-      v-if="isLoggedIn"
-      class="hidden items-center gap-4 border-b border-ui-edge bg-ui-raised px-4 py-3 sm:flex"
-    >
-      <span class="tool-heading text-lg font-semibold text-ui-ink">URL Shortener</span>
-      <AppButton to="/overview" :variant="tabVariant('overview')" class="h-9 px-3">Overview</AppButton>
-      <AppButton to="/links" :variant="tabVariant('links')" class="h-9 px-3">Links</AppButton>
-      <AppButton to="/links/new" :variant="tabVariant('create')" class="h-9 px-3">Create</AppButton>
-      <AppButton variant="ghost" class="ml-auto h-9 px-3" @click="logout" aria-label="Logout">
+    <header class="border-b border-ui-edge bg-ui-canvas">
+      <div class="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
+        <span class="tool-heading shrink-0 text-base font-semibold text-ui-ink">URL Shortener</span>
+        <nav v-if="isLoggedIn" aria-label="Main navigation" class="hidden items-center gap-2 sm:flex">
+          <AppButton to="/overview" :variant="tabVariant('overview')" class="h-9 px-3">Overview</AppButton>
+          <AppButton to="/links" :variant="tabVariant('links')" class="h-9 px-3">Links</AppButton>
+          <AppButton to="/links/new" :variant="tabVariant('create')" class="h-9 px-3">Create</AppButton>
+        </nav>
+        <div class="ml-auto flex items-center gap-2">
+          <ThemeControl />
+      <AppButton variant="ghost" class="hidden h-9 px-3 sm:inline-flex" @click="logout" aria-label="Logout">
         <template #icon>
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
@@ -17,9 +18,10 @@
         </template>
         Logout
       </AppButton>
-    </nav>
+        </div>
+      </div>
+    </header>
 
-    <div class="mx-auto flex max-w-5xl justify-end px-4 pt-4"><ThemeControl /></div>
     <main class="mx-auto max-w-5xl px-4 py-6 pb-24 sm:py-8 sm:pb-8">
       <p v-if="logoutError" role="alert" class="mb-4 text-ui-danger">{{ logoutError }}</p>
       <RouterView />
