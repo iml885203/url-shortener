@@ -1,0 +1,64 @@
+/* Opt in on the document root so teleported overlays inherit the same theme. */
+.tool-theme {
+  --ui-canvas: #fcfcfc;
+  --ui-raised: #fff;
+  --ui-inset: #f0f0f0;
+  --ui-hover: #e8e8e8;
+  --ui-ink: #202020;
+  --ui-secondary: #646464;
+  --ui-tertiary: #646464;
+  --ui-muted: #707070;
+  --ui-edge: rgba(0, 0, 0, 0.1);
+  --ui-focus: #0d74ce;
+  --ui-star: #0d74ce;
+  --ui-star-wash: #e6f4fe;
+  --ui-action-contrast: #fff;
+  --ui-action-hover: #0965b5;
+  --ui-action-active: #07579d;
+  --ui-control-edge: #ddd;
+  --ui-danger: #ce2c31;
+  --ui-danger-wash: #feeceb;
+  --ui-danger-contrast: #fff;
+  --ui-success: #18794e;
+  --ui-warning: #9c6500;
+  --ui-overlay-shadow: 0 8px 24px #0001;
+  --ui-font: "Avenir Next", "Avenir", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --ui-radius-small: 4px;
+  --ui-radius-control: 8px;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  background: var(--ui-canvas);
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light;
+}
+
+.tool-theme.dark {
+  --ui-canvas: #111111;
+  --ui-raised: #191919;
+  --ui-inset: #111111;
+  --ui-hover: #2a2a2a;
+  --ui-ink: #eeeeee;
+  --ui-secondary: #b4b4b4;
+  --ui-tertiary: #b4b4b4;
+  --ui-muted: #909090;
+  --ui-edge: rgba(255, 255, 255, 0.1);
+  --ui-focus: #70b8ff;
+  --ui-star: #70b8ff;
+  --ui-star-wash: #0d2847;
+  --ui-action-contrast: #111111;
+  --ui-action-hover: #8ec8ff;
+  --ui-action-active: #b1d9ff;
+  --ui-control-edge: #3a3a3a;
+  --ui-danger: #ff9592;
+  --ui-danger-wash: #3b181a;
+  --ui-danger-contrast: #111111;
+  --ui-success: #65d6a4;
+  --ui-warning: #f0c76f;
+  color-scheme: dark;
+}

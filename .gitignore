@@ -11,3 +11,11 @@ dist/
 
 # Local wrangler config (contains personal IDs and domains)
 packages/*/wrangler.toml
+
+# Local Worker secrets, browser artifacts, and dependency builds
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+test-results/
+playwright-report/
+*.tsbuildinfo

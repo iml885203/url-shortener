@@ -11,12 +11,22 @@
   ],
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:ui-source": "node scripts/check-ui-source.mjs",
+    "check:types": "tsc --noEmit -p packages/dashboard/tsconfig.json",
+    "test:browser": "npm --prefix packages/dashboard/frontend run test:browser"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260307.1",
+    "@cloudflare/workers-types": "^5.20261106.1",
+    "miniflare": "^4.20260301.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
-    "wrangler": "^4.71.0"
+    "vitest": "^4.1.12",
+    "wrangler": "^4.158.0"
+  },
+  "overrides": {
+    "miniflare": {
+      "sharp": "^0.35.5",
+      "undici": "^7.30.2"
+    }
   }
 }

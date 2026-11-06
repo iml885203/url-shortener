@@ -1,10 +1,11 @@
 <template>
   <div class="space-y-5">
-    <h1 class="tool-heading text-xl font-semibold text-slate-100">Links</h1>
+    <h1 class="tool-heading text-xl font-semibold text-ui-ink">Links</h1>
 
     <AppCard variant="compact" class="space-y-2">
-      <label class="text-xs font-medium uppercase tracking-wide text-slate-400">Search</label>
+      <label for="link-search" class="text-xs font-medium uppercase tracking-wide text-ui-secondary">Search</label>
       <input
+        id="link-search"
         v-model="searchInput"
         type="search"
         class="app-input"
@@ -12,11 +13,11 @@
       />
     </AppCard>
 
-    <AppCard v-if="loading" variant="compact" class="py-16 text-center text-slate-400">Loading…</AppCard>
-    <AppCard v-else-if="error" variant="compact" class="py-16 text-center text-red-400">{{ error }}</AppCard>
-    <AppCard v-else-if="links.length === 0" variant="compact" class="py-16 text-center text-slate-400">
+    <AppCard v-if="loading" variant="compact" class="py-16 text-center text-ui-secondary">Loading…</AppCard>
+    <AppCard v-else-if="error" variant="compact" class="py-16 text-center text-ui-danger">{{ error }}</AppCard>
+    <AppCard v-else-if="links.length === 0" variant="compact" class="py-16 text-center text-ui-secondary">
       {{ searchQuery ? 'No matching links.' : 'No links yet.' }}
-      <RouterLink v-if="!searchQuery" to="/links/new" class="text-blue-400 transition-colors duration-200 hover:text-blue-300">Create one.</RouterLink>
+      <RouterLink v-if="!searchQuery" to="/links/new" class="text-ui-focus transition-colors duration-200 hover:text-ui-action-hover">Create one.</RouterLink>
     </AppCard>
 
     <!-- Mobile -->
@@ -24,26 +25,26 @@
       <AppCard v-for="link in links" :key="link.id" variant="compact" class="space-y-3">
         <div class="flex items-start gap-3">
           <img v-if="link.ogImage" :src="link.ogImage" alt="" class="h-10 w-10 flex-shrink-0 rounded-md object-cover" />
-          <div v-else class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-slate-700 bg-slate-950 text-slate-400">
+          <div v-else class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-ui-control-edge bg-ui-canvas text-ui-secondary">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5l3-3m-6.75 7.5l-1.5 1.5a3.182 3.182 0 104.5 4.5l3-3a3.182 3.182 0 00-4.5-4.5l-1.5 1.5m9-9l1.5-1.5a3.182 3.182 0 10-4.5-4.5l-3 3a3.182 3.182 0 104.5 4.5l1.5-1.5" />
             </svg>
           </div>
 
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium text-slate-100">{{ link.ogTitle || link.url }}</p>
-            <p v-if="link.ogTitle" class="mt-0.5 truncate text-xs text-slate-400">{{ link.url }}</p>
+            <p class="truncate text-sm font-medium text-ui-ink">{{ link.ogTitle || link.url }}</p>
+            <p v-if="link.ogTitle" class="mt-0.5 truncate text-xs text-ui-secondary">{{ link.url }}</p>
           </div>
 
           <div class="text-right">
-            <p class="text-sm font-semibold text-slate-100">{{ link.clickCount ?? 0 }}</p>
-            <p class="text-xs text-slate-400">clicks</p>
+            <p class="text-sm font-semibold text-ui-ink">{{ link.clickCount ?? 0 }}</p>
+            <p class="text-xs text-ui-secondary">clicks</p>
           </div>
         </div>
 
         <div class="space-y-2">
-          <AppCard variant="compact" class="bg-slate-950 px-3 py-2">
-            <div class="mb-1 text-[11px] uppercase tracking-wide text-slate-400">Short URL</div>
+          <AppCard variant="compact" class="bg-ui-canvas px-3 py-2">
+            <div class="mb-1 text-[11px] uppercase tracking-wide text-ui-secondary">Short URL</div>
             <div class="flex items-center gap-2">
               <a :href="link.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-xs">{{ link.shortUrl }}</a>
               <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share short URL for link ${link.id}`" @click="shareUrl(link.shortUrl, link.ogTitle)">
@@ -56,8 +57,8 @@
             </div>
           </AppCard>
 
-          <AppCard variant="compact" class="bg-slate-950 px-3 py-2">
-            <div class="mb-1 text-[11px] uppercase tracking-wide text-slate-400">Long URL</div>
+          <AppCard variant="compact" class="bg-ui-canvas px-3 py-2">
+            <div class="mb-1 text-[11px] uppercase tracking-wide text-ui-secondary">Long URL</div>
             <div class="flex items-center gap-2">
               <a :href="link.longUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-xs">{{ link.longUrl }}</a>
               <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
@@ -70,8 +71,8 @@
             </div>
           </AppCard>
 
-          <AppCard v-if="link.customUrl" variant="compact" class="border border-blue-900 bg-slate-950 px-3 py-2">
-            <div class="mb-1 text-[11px] uppercase tracking-wide text-blue-400">Custom URL</div>
+          <AppCard v-if="link.customUrl" variant="compact" class="border border-ui-control-edge bg-ui-canvas px-3 py-2">
+            <div class="mb-1 text-[11px] uppercase tracking-wide text-ui-focus">Custom URL</div>
             <div class="flex items-center gap-2">
               <a :href="link.customUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-xs">{{ link.customUrl }}</a>
               <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy custom URL for link ${link.id}`" @click="shareUrl(link.customUrl!, link.ogTitle)">
@@ -95,18 +96,18 @@
     </div>
 
     <!-- Desktop -->
-    <AppCard v-if="links.length > 0" variant="compact" class="hidden divide-y divide-slate-800 p-0 sm:block">
+    <AppCard v-if="links.length > 0" variant="compact" class="hidden divide-y divide-ui-edge p-0 sm:block">
       <div v-for="link in links" :key="link.id" class="flex items-start gap-4 p-4">
         <img v-if="link.ogImage" :src="link.ogImage" alt="" class="h-12 w-12 flex-shrink-0 rounded-md object-cover" />
-        <div v-else class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md border border-slate-700 bg-slate-950 text-slate-400">
+        <div v-else class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md border border-ui-control-edge bg-ui-canvas text-ui-secondary">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5l3-3m-6.75 7.5l-1.5 1.5a3.182 3.182 0 104.5 4.5l3-3a3.182 3.182 0 00-4.5-4.5l-1.5 1.5m9-9l1.5-1.5a3.182 3.182 0 10-4.5-4.5l-3 3a3.182 3.182 0 104.5 4.5l1.5-1.5" />
           </svg>
         </div>
 
         <div class="min-w-0 flex-1">
-          <p class="truncate text-sm font-medium text-slate-100">{{ link.ogTitle || link.url }}</p>
-          <p v-if="link.ogTitle" class="mt-0.5 truncate text-xs text-slate-400">{{ link.url }}</p>
+          <p class="truncate text-sm font-medium text-ui-ink">{{ link.ogTitle || link.url }}</p>
+          <p v-if="link.ogTitle" class="mt-0.5 truncate text-xs text-ui-secondary">{{ link.url }}</p>
 
           <div class="mt-2 flex flex-wrap items-center gap-2">
             <a :href="link.shortUrl" target="_blank" class="tool-link font-mono text-xs">{{ link.shortUrl }}</a>
@@ -119,7 +120,7 @@
               </template>
             </AppButton>
 
-            <span class="text-slate-600">|</span>
+            <span class="text-ui-muted">|</span>
 
             <a :href="link.longUrl" target="_blank" :title="link.longUrl" class="tool-link max-w-[240px] truncate font-mono text-xs">
               {{ link.longUrl }}
@@ -137,8 +138,8 @@
 
           <!-- Custom slug — separate row to avoid overflow -->
           <div v-if="link.customUrl" class="mt-1 flex items-center gap-1.5">
-            <span class="rounded bg-blue-900/40 px-1.5 py-0.5 text-[11px] font-medium text-blue-300">Custom</span>
-            <a :href="link.customUrl" target="_blank" :title="link.customUrl" class="tool-link font-mono text-xs text-blue-300">
+            <span class="rounded bg-ui-hover px-1.5 py-0.5 text-[11px] font-medium text-ui-action-hover">Custom</span>
+            <a :href="link.customUrl" target="_blank" :title="link.customUrl" class="tool-link font-mono text-xs text-ui-action-hover">
               {{ link.customUrl }}
             </a>
             <AppButton variant="ghost" class="h-7 w-7 px-0" :aria-label="`Copy custom URL for link ${link.id}`" @click="shareUrl(link.customUrl!, link.ogTitle)">
@@ -153,8 +154,8 @@
         </div>
 
         <div class="text-right">
-          <p class="text-sm font-semibold text-slate-100">{{ link.clickCount ?? 0 }}</p>
-          <p class="text-xs text-slate-400">clicks</p>
+          <p class="text-sm font-semibold text-ui-ink">{{ link.clickCount ?? 0 }}</p>
+          <p class="text-xs text-ui-secondary">clicks</p>
         </div>
 
         <div class="grid grid-cols-2 gap-1.5">
@@ -167,22 +168,19 @@
     </AppCard>
 
     <AppCard v-if="!loading && !error && total > 0" variant="compact" class="flex items-center justify-between">
-      <p class="text-xs text-slate-400">Page {{ page }} / {{ totalPages }} · {{ total }} total</p>
+      <p class="text-xs text-ui-secondary">Page {{ page }} / {{ totalPages }} · {{ total }} total</p>
       <div class="flex items-center gap-2">
         <AppButton type="button" variant="secondary" class="h-8 px-2.5 text-xs" :disabled="page <= 1 || loading" @click="goToPage(page - 1)">Prev</AppButton>
         <AppButton type="button" variant="secondary" class="h-8 px-2.5 text-xs" :disabled="page >= totalPages || loading" @click="goToPage(page + 1)">Next</AppButton>
       </div>
     </AppCard>
 
-    <Teleport to="body">
-      <div v-if="deleteTarget" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" @click.self="deleteTarget = null">
-        <AppCard variant="elevated" class="w-full max-w-sm">
-          <h2 class="tool-heading text-base font-semibold text-slate-100">Delete this link?</h2>
-          <p class="mt-1 text-sm text-slate-400">This action cannot be undone.</p>
+    <AppDialog v-model:visible="deleteDialogVisible" title="Delete this link?" :busy="deleteLoading">
+          <p class="mt-1 text-sm text-ui-secondary">This action cannot be undone.</p>
 
-          <AppCard variant="compact" class="mt-4 bg-slate-950 px-3 py-2">
-            <p class="text-xs uppercase tracking-wide text-slate-400">Target URL</p>
-            <p class="mt-1 break-all text-sm text-slate-200">{{ deleteTarget.url }}</p>
+          <AppCard variant="compact" class="mt-4 bg-ui-canvas px-3 py-2">
+            <p class="text-xs uppercase tracking-wide text-ui-secondary">Target URL</p>
+            <p class="mt-1 break-all text-sm text-ui-ink">{{ deleteTarget?.url }}</p>
           </AppCard>
 
           <div class="mt-5 flex gap-3">
@@ -191,34 +189,27 @@
               {{ deleteLoading ? 'Deleting…' : 'Delete' }}
             </AppButton>
           </div>
-        </AppCard>
-      </div>
-    </Teleport>
+    </AppDialog>
 
-    <Teleport to="body">
-      <div v-if="qrModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" @click.self="closeQrModal">
-        <AppCard variant="elevated" class="w-full max-w-sm space-y-4">
-          <div>
-            <h2 class="tool-heading text-base font-semibold text-slate-100">QR Code</h2>
-          </div>
-
-          <div class="flex gap-1 rounded-md bg-slate-800 p-1">
+    <AppDialog v-model:visible="qrDialogVisible" title="QR Code">
+      <div v-if="qrModal" class="space-y-4">
+          <div class="flex gap-1 rounded-md bg-ui-hover p-1">
             <button
               class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors"
-              :class="qrModal.activeType === 'short' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'"
+              :class="qrModal.activeType === 'short' ? 'bg-ui-control-edge text-ui-ink' : 'text-ui-secondary hover:text-ui-ink'"
               @click="switchQrType('short')"
             >Short</button>
             <button
               class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors"
-              :class="qrModal.activeType === 'long' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'"
+              :class="qrModal.activeType === 'long' ? 'bg-ui-control-edge text-ui-ink' : 'text-ui-secondary hover:text-ui-ink'"
               @click="switchQrType('long')"
             >Long</button>
           </div>
 
-          <p class="text-center font-mono text-xs text-slate-400 select-all">{{ qrModal.activeType === 'short' ? qrModal.share.shortUrl : qrModal.share.longUrl }}</p>
+          <p class="text-center font-mono text-xs text-ui-secondary select-all">{{ qrModal.activeType === 'short' ? qrModal.share.shortUrl : qrModal.share.longUrl }}</p>
 
-          <div class="overflow-hidden rounded-md border border-slate-800 bg-white p-3">
-            <img v-if="qrModal.loading" src="" alt="" class="mx-auto block h-64 w-64 animate-pulse bg-slate-100" />
+          <div class="overflow-hidden rounded-md border border-ui-edge bg-white p-3">
+            <div v-if="qrModal.loading" role="status" aria-label="Loading QR code" class="mx-auto h-64 w-full max-w-64 animate-pulse bg-ui-hover"></div>
             <img v-else :src="qrModal.imageUrl" alt="QR code" class="mx-auto block h-64 w-64" />
           </div>
 
@@ -227,18 +218,18 @@
             <AppButton type="button" variant="secondary" class="w-full" :disabled="qrModal.loading" @click="shareQrImage">Share</AppButton>
           </div>
           <AppButton type="button" variant="ghost" class="w-full" @click="closeQrModal">Close</AppButton>
-        </AppCard>
       </div>
-    </Teleport>
+    </AppDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, inject, watch, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, inject, watch, onBeforeUnmount } from 'vue';
 import { copyToClipboard } from '@/utils/clipboard';
 import { listLinks, deleteLink, getLinkShare, getLinkQrBlob, type Link, type LinkSharePayload } from '@/api/client';
 import AppButton from '@/components/ui/AppButton.vue';
 import AppCard from '@/components/ui/AppCard.vue';
+import AppDialog from '@/components/ui/AppDialog.vue';
 
 interface QrModalState {
   linkId: number;
@@ -262,6 +253,9 @@ const total = ref(0);
 const totalPages = ref(1);
 const qrModal = ref<QrModalState | null>(null);
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+const deleteDialogVisible = computed({ get: () => !!deleteTarget.value, set: value => { if (!value) deleteTarget.value = null; } });
+const qrDialogVisible = computed({ get: () => !!qrModal.value, set: value => { if (!value) closeQrModal(); } });
 
 const showCopyToast = inject<() => void>('showCopyToast', () => {});
 

@@ -9,49 +9,49 @@
         </template>
         Back to links
       </AppButton>
-      <h1 class="tool-heading text-xl font-semibold text-slate-100">Click Stats</h1>
+      <h1 class="tool-heading text-xl font-semibold text-ui-ink">Click Stats</h1>
     </div>
 
-    <AppCard v-if="loading" variant="compact" class="py-16 text-center text-slate-400">Loading…</AppCard>
-    <AppCard v-else-if="error" variant="compact" class="py-16 text-center text-red-400">{{ error }}</AppCard>
+    <AppCard v-if="loading" variant="compact" class="py-16 text-center text-ui-secondary">Loading…</AppCard>
+    <AppCard v-else-if="error" variant="compact" class="py-16 text-center text-ui-danger">{{ error }}</AppCard>
 
     <div v-else class="space-y-6">
       <AppCard variant="compact">
-        <h2 class="tool-heading mb-4 text-sm font-semibold text-slate-200">Clicks by Day (last 30)</h2>
-        <div v-if="stats!.byDay.length === 0" class="text-sm text-slate-400">No data yet</div>
+        <h2 class="tool-heading mb-4 text-sm font-semibold text-ui-ink">Clicks by Day (last 30)</h2>
+        <div v-if="stats!.byDay.length === 0" class="text-sm text-ui-secondary">No data yet</div>
         <div v-else class="space-y-2">
           <div v-for="row in stats!.byDay" :key="row.date" class="flex items-center gap-3">
-            <span class="w-24 flex-shrink-0 text-xs text-slate-400">{{ row.date }}</span>
-            <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-800">
+            <span class="w-24 flex-shrink-0 text-xs text-ui-secondary">{{ row.date }}</span>
+            <div class="h-2 flex-1 overflow-hidden rounded-full bg-ui-hover">
               <div
-                class="h-2 rounded-full bg-blue-600 transition-all duration-200"
+                class="h-2 rounded-full bg-ui-focus transition-[width] duration-200"
                 :style="{ width: barWidth(row.count, maxDayCount) + '%' }"
               />
             </div>
-            <span class="w-8 text-right text-xs font-medium text-slate-200">{{ row.count }}</span>
+            <span class="w-8 text-right text-xs font-medium text-ui-ink">{{ row.count }}</span>
           </div>
         </div>
       </AppCard>
 
       <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         <AppCard variant="compact">
-          <h2 class="tool-heading mb-4 text-sm font-semibold text-slate-200">Top Referrers</h2>
-          <div v-if="stats!.byReferrer.length === 0" class="text-sm text-slate-400">No data</div>
+          <h2 class="tool-heading mb-4 text-sm font-semibold text-ui-ink">Top Referrers</h2>
+          <div v-if="stats!.byReferrer.length === 0" class="text-sm text-ui-secondary">No data</div>
           <div v-else class="space-y-2">
             <div v-for="row in stats!.byReferrer" :key="row.referrer ?? 'direct'" class="flex items-center justify-between gap-3">
-              <span class="truncate text-xs text-slate-400">{{ row.referrer ?? '(direct)' }}</span>
-              <span class="flex-shrink-0 text-xs font-medium text-slate-200">{{ row.count }}</span>
+              <span class="truncate text-xs text-ui-secondary">{{ row.referrer ?? '(direct)' }}</span>
+              <span class="flex-shrink-0 text-xs font-medium text-ui-ink">{{ row.count }}</span>
             </div>
           </div>
         </AppCard>
 
         <AppCard variant="compact">
-          <h2 class="tool-heading mb-4 text-sm font-semibold text-slate-200">Top Countries</h2>
-          <div v-if="stats!.byCountry.length === 0" class="text-sm text-slate-400">No data</div>
+          <h2 class="tool-heading mb-4 text-sm font-semibold text-ui-ink">Top Countries</h2>
+          <div v-if="stats!.byCountry.length === 0" class="text-sm text-ui-secondary">No data</div>
           <div v-else class="space-y-2">
             <div v-for="row in stats!.byCountry" :key="row.country ?? 'unknown'" class="flex items-center justify-between gap-3">
-              <span class="text-xs text-slate-400">{{ row.country ?? '(unknown)' }}</span>
-              <span class="flex-shrink-0 text-xs font-medium text-slate-200">{{ row.count }}</span>
+              <span class="text-xs text-ui-secondary">{{ row.country ?? '(unknown)' }}</span>
+              <span class="flex-shrink-0 text-xs font-medium text-ui-ink">{{ row.count }}</span>
             </div>
           </div>
         </AppCard>

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { authentication } from './auth/oidc.js';
 import { DashboardEnv } from './types.js';
 import {
   listLinks,
@@ -27,6 +28,10 @@ app.use('/api/*', (c, next) => {
     allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
   })(c, next);
 });
+
+const auth = authentication();
+app.route('/', auth.router);
+app.use('/api/*', auth.middleware);
 
 // Admin API routes
 app.get('/api/me', getMe);
@@ -66,11 +71,11 @@ app.get('/dashboard/*', async (c) => {
   // Serve index.html with injected runtime config (for SPA routes and root)
   const indexRes = await assetsFetcher.fetch(new Request(new URL('/index.html', c.req.url)));
   const html = await indexRes.text();
-  const configScript = `<script>window.__CONFIG__ = { baseUrl: "${c.env.SHORT_BASE_URL ?? ''}" }<\/script>`;
+  const configScript = `<script>window.__CONFIG__ = ${JSON.stringify({ baseUrl: c.env.SHORT_BASE_URL ?? '' }).replaceAll('<', '\\u003c')}<\/script>`;
   const injectedHtml = html.replace('</head>', `${configScript}</head>`);
   return new Response(injectedHtml, {
     status: 200,
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'same-origin' },
   });
 });
 

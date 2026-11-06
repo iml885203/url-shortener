@@ -1,0 +1,8 @@
+API_KEY=replace-with-a-random-development-token
+# Optional HTTPS deployment settings. Keep all absent for token-only mode.
+# OIDC_ISSUER=https://identity.example
+# OIDC_CLIENT_ID=your-registered-client
+# OIDC_CLIENT_SECRET=replace-with-your-client-secret
+# SESSION_SECRET=replace-with-an-independent-random-secret-of-at-least-32-characters
+# OIDC_REQUIRED_GROUP=administrators
+# OIDC_PROVIDER_NAME=SSO

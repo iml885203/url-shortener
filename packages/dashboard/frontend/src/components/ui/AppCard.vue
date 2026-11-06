@@ -21,11 +21,11 @@ const props = withDefaults(
 );
 
 const cardClass = computed(() => {
-  const base = 'rounded-lg border border-slate-800 bg-slate-900';
+  const base = 'rounded-control border border-ui-edge bg-ui-raised';
   const variants: Record<CardVariant, string> = {
     default: 'p-5 sm:p-6',
     compact: 'p-4',
-    elevated: 'p-6 shadow-2xl',
+    elevated: 'p-6 ',
   };
   return [base, variants[props.variant]];
 });

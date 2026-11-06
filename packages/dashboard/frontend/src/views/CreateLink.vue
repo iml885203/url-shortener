@@ -1,14 +1,14 @@
 <template>
   <div class="mx-auto max-w-4xl space-y-5">
-    <h1 class="tool-heading text-xl font-semibold text-slate-100">New Link</h1>
+    <h1 class="tool-heading text-xl font-semibold text-ui-ink">New Link</h1>
 
     <div class="md:flex md:items-start md:gap-6">
       <form @submit.prevent="submit" class="flex-1 min-w-0">
         <AppCard class="space-y-5">
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-200">Target URL <span class="text-red-400">*</span></label>
+            <label for="link-url" class="mb-1 block text-sm font-medium text-ui-ink">Target URL <span class="text-ui-danger">*</span></label>
             <input
-              v-model="form.url"
+              id="link-url" v-model="form.url"
               type="url"
               required
               class="app-input"
@@ -17,11 +17,11 @@
           </div>
 
           <div>
-            <label class="mb-1 block text-sm font-medium text-slate-200">Custom Slug <span class="text-slate-400 font-normal">(optional)</span></label>
+            <label for="link-customSlug" class="mb-1 block text-sm font-medium text-ui-ink">Custom Slug <span class="text-ui-secondary font-normal">(optional)</span></label>
             <div class="flex items-center">
-              <span class="flex h-10 items-center rounded-l-md border border-r-0 border-slate-700 bg-slate-900 px-3 text-xs text-slate-400 select-none">{{ baseUrlShort }}/</span>
+              <span class="flex min-h-11 items-center rounded-l-md border border-r-0 border-ui-control-edge bg-ui-raised px-3 text-xs text-ui-secondary select-none">{{ baseUrlShort }}/</span>
               <input
-                v-model="form.customSlug"
+                id="link-customSlug" v-model="form.customSlug"
                 type="text"
                 class="app-input rounded-l-none"
                 placeholder="e.g. github"
@@ -29,28 +29,28 @@
                 @input="slugError = ''"
               />
             </div>
-            <p v-if="slugError" class="mt-1 text-xs text-red-400">{{ slugError }}</p>
-            <p v-else-if="form.customSlug.trim()" class="mt-1 text-xs" :class="slugValid ? 'text-green-400' : 'text-red-400'">
+            <p v-if="slugError" role="alert" class="mt-1 text-xs text-ui-danger">{{ slugError }}</p>
+            <p v-else-if="form.customSlug.trim()" class="mt-1 text-xs" :class="slugValid ? 'text-ui-success' : 'text-ui-danger'">
               {{ slugValid ? `✓ ${baseUrl}/${form.customSlug.trim()}` : 'Only letters, numbers, hyphens, underscores (1–64 chars)' }}
             </p>
           </div>
 
-          <label class="flex cursor-pointer items-center justify-between rounded-md border border-slate-800 bg-slate-950 px-3 py-2.5">
-            <span class="text-sm font-medium text-slate-200">Use custom OG preview</span>
+          <label class="flex cursor-pointer items-center justify-between rounded-md border border-ui-edge bg-ui-canvas px-3 py-2.5">
+            <span class="text-sm font-medium text-ui-ink">Use custom OG preview</span>
             <input
               v-model="form.ogEnabled"
               type="checkbox"
-              class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              class="h-4 w-4 rounded border-ui-control-edge bg-ui-raised text-ui-focus focus:ring-2 focus:ring-ui-focus"
             />
           </label>
 
-          <p v-if="!form.ogEnabled" class="text-sm text-slate-400">Will use destination website preview</p>
+          <p v-if="!form.ogEnabled" class="text-sm text-ui-secondary">Will use destination website preview</p>
 
           <template v-if="form.ogEnabled">
             <div>
-              <label class="mb-1 block text-sm font-medium text-slate-200">OG Title</label>
+              <label for="link-ogTitle" class="mb-1 block text-sm font-medium text-ui-ink">OG Title</label>
               <input
-                v-model="form.ogTitle"
+                id="link-ogTitle" v-model="form.ogTitle"
                 type="text"
                 class="app-input"
                 placeholder="Article title for social preview"
@@ -58,9 +58,9 @@
             </div>
 
             <div>
-              <label class="mb-1 block text-sm font-medium text-slate-200">OG Description</label>
+              <label for="link-ogDesc" class="mb-1 block text-sm font-medium text-ui-ink">OG Description</label>
               <textarea
-                v-model="form.ogDesc"
+                id="link-ogDesc" v-model="form.ogDesc"
                 rows="2"
                 class="app-input"
                 placeholder="Description shown in social previews"
@@ -68,19 +68,19 @@
             </div>
 
             <div>
-              <label class="mb-1 block text-sm font-medium text-slate-200">OG Image URL</label>
+              <label for="link-ogImage" class="mb-1 block text-sm font-medium text-ui-ink">OG Image URL</label>
               <input
-                v-model="form.ogImage"
+                id="link-ogImage" v-model="form.ogImage"
                 type="url"
                 class="app-input"
                 placeholder="https://… (or upload after creating)"
               />
             </div>
 
-            <p class="text-xs text-slate-400">To upload an OG image, create the link first, then edit it to upload.</p>
+            <p class="text-xs text-ui-secondary">To upload an OG image, create the link first, then edit it to upload.</p>
           </template>
 
-          <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+          <p v-if="error" role="alert" class="text-sm text-ui-danger">{{ error }}</p>
 
           <div class="flex flex-col gap-3 pt-1 sm:flex-row">
             <AppButton type="submit" :disabled="loading" variant="primary" class="w-full sm:w-auto">
@@ -104,26 +104,22 @@
       </form>
 
       <div class="mt-6 w-full flex-shrink-0 md:mt-0 md:w-80 lg:w-96">
-        <p class="mb-2 text-sm font-medium text-slate-400">Preview</p>
+        <p class="mb-2 text-sm font-medium text-ui-secondary">Preview</p>
         <OgPreviewCard
           :title="cardTitle"
           :description="cardDescription"
           :imageUrl="cardImageUrl"
           :showDescriptionPlaceholder="false"
         />
-        <p v-if="!form.ogEnabled" class="mt-2 text-xs text-slate-400">Preview from destination website</p>
+        <p v-if="!form.ogEnabled" class="mt-2 text-xs text-ui-secondary">Preview from destination website</p>
       </div>
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="createdLink"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
-      >
-        <AppCard variant="elevated" class="w-full max-w-md">
+    <AppDialog v-model:visible="createdDialogVisible" title="Link created">
+      <div v-if="createdLink">
           <div class="text-center">
             <svg
-              class="mx-auto mb-2 h-8 w-8 text-blue-400"
+              class="mx-auto mb-2 h-8 w-8 text-ui-focus"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -133,14 +129,13 @@
               <circle cx="12" cy="12" r="9"></circle>
               <path stroke-linecap="round" stroke-linejoin="round" d="m8.5 12.5 2.2 2.2 4.8-5.1"></path>
             </svg>
-            <h2 class="tool-heading text-lg font-semibold text-slate-100">Link Created</h2>
-            <p class="mt-1 break-all text-sm text-slate-400">{{ createdLink.url }}</p>
+            <p class="mt-1 break-all text-sm text-ui-secondary">{{ createdLink.url }}</p>
           </div>
 
           <div class="mt-5 space-y-4">
             <div v-if="createdLink.customUrl">
-              <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Custom URL</p>
-              <AppCard variant="compact" class="bg-slate-950 px-3 py-2 border border-blue-800">
+              <p class="mb-1 text-xs font-medium uppercase tracking-wide text-ui-secondary">Custom URL</p>
+              <AppCard variant="compact" class="bg-ui-canvas px-3 py-2 border border-ui-control-edge">
                 <div class="flex items-center gap-2">
                   <a :href="createdLink.customUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-sm">{{ createdLink.customUrl }}</a>
                   <AppButton
@@ -162,8 +157,8 @@
             </div>
 
             <div>
-              <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Short URL</p>
-              <AppCard variant="compact" class="bg-slate-950 px-3 py-2">
+              <p class="mb-1 text-xs font-medium uppercase tracking-wide text-ui-secondary">Short URL</p>
+              <AppCard variant="compact" class="bg-ui-canvas px-3 py-2">
                 <div class="flex items-center gap-2">
                   <a :href="createdLink.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-sm">{{ createdLink.shortUrl }}</a>
                   <AppButton
@@ -185,14 +180,14 @@
             </div>
 
             <div>
-              <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Long URL</p>
-              <AppCard variant="compact" class="bg-slate-950 px-3 py-2">
+              <p class="mb-1 text-xs font-medium uppercase tracking-wide text-ui-secondary">Long URL</p>
+              <AppCard variant="compact" class="bg-ui-canvas px-3 py-2">
                 <div class="flex items-center gap-2">
                   <a
                     :href="createdLink.longUrl"
                     target="_blank"
                     :title="createdLink.longUrl"
-                    class="min-w-0 flex-1 truncate font-mono text-sm text-slate-300 transition-colors duration-200 hover:text-slate-100"
+                    class="min-w-0 flex-1 truncate font-mono text-sm text-ui-secondary transition-colors duration-200 hover:text-ui-ink"
                   >
                     {{ createdLink.longUrl }}
                   </a>
@@ -233,9 +228,8 @@
               Back to List
             </AppButton>
           </div>
-        </AppCard>
       </div>
-    </Teleport>
+    </AppDialog>
   </div>
 </template>
 
@@ -246,6 +240,7 @@ import { createLink, fetchDestinationOgPreview, type DestinationOgPreview, type 
 import OgPreviewCard from '@/components/OgPreviewCard.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import AppCard from '@/components/ui/AppCard.vue';
+import AppDialog from '@/components/ui/AppDialog.vue';
 import { config } from '@/config';
 
 const SLUG_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
@@ -260,6 +255,7 @@ const loading = ref(false);
 const error = ref('');
 const slugError = ref('');
 const createdLink = ref<Link | null>(null);
+const createdDialogVisible = computed({ get: () => !!createdLink.value, set: value => { if (!value) createAnother(); } });
 const destinationPreview = ref<DestinationOgPreview | null>(null);
 const destinationPreviewLoading = ref(false);
 const previewFetchSeq = ref(0);

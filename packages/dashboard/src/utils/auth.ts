@@ -7,7 +7,7 @@ import { DashboardEnv } from '../types.js';
  *   - Authorization: Bearer <key>
  *   - X-API-Key: <key>
  */
-export function isAuthenticated(c: Context<{ Bindings: DashboardEnv }>): boolean {
+export function hasApiKey(c: Context<{ Bindings: DashboardEnv }>): boolean {
   const apiKey = c.env.API_KEY;
   if (!apiKey) return false;
 
@@ -22,4 +22,8 @@ export function isAuthenticated(c: Context<{ Bindings: DashboardEnv }>): boolean
   }
 
   return false;
+}
+
+export function isAuthenticated(c: Context<{ Bindings: DashboardEnv }>): boolean {
+  return hasApiKey(c) || c.get('browserAuthenticated') === true;
 }
