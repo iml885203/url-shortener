@@ -5,6 +5,7 @@ import AppButton from '@/components/ui/AppButton.vue';
 import { verifyKey } from '@/api/client';
 import { oidc, authError, refreshAuth } from '@/auth';
 const router = useRouter();
+const logoUrl = import.meta.env.BASE_URL + 'logo.svg';
 const key = ref(''), error = ref('');
 const loading = ref(false), redirecting = ref(false);
 const failed = new URLSearchParams(location.search).get('error') === 'oidc';
@@ -30,9 +31,7 @@ async function submit() {
 </script>
 <template>
   <section class="login-panel" aria-labelledby="login-title">
-    <svg class="login-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round" d="m10 13 4-4m-6 7-2 2a3.54 3.54 0 0 1-5-5l5-5a3.54 3.54 0 0 1 5 0m2 0 2-2a3.54 3.54 0 0 1 5 5l-5 5a3.54 3.54 0 0 1-5 0" />
-    </svg>
+    <img class="login-icon" :src="logoUrl" alt="" width="48" height="48" />
     <div><h1 id="login-title" class="font-semibold">Sign in to URL Shortener</h1><p class="mt-3 text-ui-secondary">Manage your links and see how they’re used.</p></div>
     <div v-if="authError" class="space-y-3" role="alert"><p class="text-ui-danger">{{ authError }}</p><AppButton @click="refreshAuth">Retry connection</AppButton></div>
     <template v-if="oidc.enabled">
@@ -51,5 +50,5 @@ async function submit() {
 </template>
 <style scoped>
 .login-panel { width: 100%; max-width: 380px; margin: clamp(40px, 10vh, 120px) auto; display: grid; gap: 24px; }
-.login-icon { width: 40px; height: 40px; color: var(--ui-focus); }
+.login-icon { width: 48px; height: 48px; }
 </style>
