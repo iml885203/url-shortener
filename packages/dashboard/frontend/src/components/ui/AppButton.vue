@@ -49,15 +49,15 @@ const componentProps = computed(() => {
 
 const buttonClass = computed(() => {
   const base =
-    'inline-flex h-10 select-none items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+    'inline-flex min-h-11 h-11 shrink-0 select-none items-center justify-center gap-2 rounded-control px-4 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ui-focus focus-visible:ring-offset-2 focus-visible:ring-offset-ui-canvas';
 
   const variants: Record<ButtonVariant, string> = {
-    primary: 'cursor-pointer bg-blue-600 text-slate-100 hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50',
+    primary: 'cursor-pointer bg-ui-focus text-ui-action-contrast hover:bg-ui-action-hover disabled:cursor-not-allowed disabled:opacity-50',
     secondary:
-      'cursor-pointer border border-slate-700 bg-slate-900 text-slate-200 hover:border-blue-500 hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-50',
-    danger: 'cursor-pointer bg-red-600 text-red-50 hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50',
+      'cursor-pointer border border-ui-control-edge bg-ui-raised text-ui-ink hover:border-ui-focus hover:text-ui-focus disabled:cursor-not-allowed disabled:opacity-50',
+    danger: 'cursor-pointer bg-ui-danger text-ui-danger-contrast hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50',
     ghost:
-      'cursor-pointer border border-transparent bg-transparent text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-50',
+      'cursor-pointer border border-transparent bg-transparent text-ui-secondary hover:bg-ui-hover hover:text-ui-ink disabled:cursor-not-allowed disabled:opacity-50',
   };
 
   return [base, variants[props.variant], props.disabled && 'pointer-events-none'];

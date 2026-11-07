@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -22,17 +23,41 @@ jobs:
               - 'packages/shared/**'
             dashboard:
               - 'packages/dashboard/**'
+              - 'migrations/**'
+              - 'scripts/check-ui-source.mjs'
+              - 'ui-source.json'
+              - 'package.json'
+              - 'package-lock.json'
               - 'packages/shared/**'
 
-  deploy-redirect:
-    needs: changes
-    if: needs.changes.outputs.redirect == 'true' || github.event_name == 'workflow_dispatch'
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+      - run: npm ci
+      - run: npm ci
+        working-directory: packages/dashboard/frontend
+      - run: npm test
+      - run: npm run check:types
+      - run: npm run check:ui-source
+      - run: npm run build
+        working-directory: packages/dashboard/frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: packages/dashboard/frontend
+      - run: npm run test:browser
+
+  deploy-redirect:
+    needs: [changes, verify]
+    if: github.event_name != 'pull_request' && (needs.changes.outputs.redirect == 'true' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: npm ci
       - name: Extract host from SHORT_BASE_URL
         run: echo "URL_HOST=$(echo '${{ secrets.SHORT_BASE_URL }}' | sed 's|https\?://||')" >> $GITHUB_ENV
@@ -68,19 +93,19 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
   deploy-dashboard:
-    needs: changes
-    if: needs.changes.outputs.dashboard == 'true' || github.event_name == 'workflow_dispatch'
+    needs: [changes, verify]
+    if: github.event_name != 'pull_request' && (needs.changes.outputs.dashboard == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - run: npm ci
       - name: Extract host from SHORT_BASE_URL
         run: echo "URL_HOST=$(echo '${{ secrets.SHORT_BASE_URL }}' | sed 's|https\?://||')" >> $GITHUB_ENV
       - name: Install frontend dependencies
-        run: npm install
+        run: npm ci
         working-directory: packages/dashboard/frontend
       - name: Build frontend
         run: node node_modules/vite/bin/vite.js build
@@ -97,6 +122,7 @@ jobs:
           routes = [
             { pattern = "${{ env.URL_HOST }}/api/*", zone_name = "${{ secrets.ZONE_NAME }}" },
             { pattern = "${{ env.URL_HOST }}/dashboard/*", zone_name = "${{ secrets.ZONE_NAME }}" },
+            { pattern = "${{ env.URL_HOST }}/auth/*", zone_name = "${{ secrets.ZONE_NAME }}" },
           ]
 
           [assets]
@@ -123,6 +149,11 @@ jobs:
 
           # Set secrets via: wrangler secret put API_KEY
           EOF
+      - name: Apply additive authentication migration
+        run: npx wrangler d1 execute url-shortener --file=../../migrations/0004_auth_sessions.sql --remote --yes
+        working-directory: packages/dashboard
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       - run: npx wrangler deploy
         working-directory: packages/dashboard
         env:

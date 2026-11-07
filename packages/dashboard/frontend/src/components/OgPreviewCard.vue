@@ -1,6 +1,6 @@
 <template>
-  <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900">
-    <div class="flex aspect-video w-full items-center justify-center overflow-hidden bg-slate-950">
+  <div class="overflow-hidden rounded-lg border border-ui-edge bg-ui-raised">
+    <div class="flex aspect-video w-full items-center justify-center overflow-hidden bg-ui-canvas">
       <img
         v-if="imageUrl && !imgErrored"
         :src="imageUrl"
@@ -10,7 +10,7 @@
       />
       <svg
         v-else
-        class="h-10 w-10 text-slate-500"
+        class="h-10 w-10 text-ui-muted"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -24,14 +24,14 @@
     </div>
 
     <div class="space-y-1 px-3 py-3">
-      <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">{{ domain }}</p>
-      <p class="text-sm font-semibold leading-snug text-slate-100">
+      <p class="text-[11px] font-medium uppercase tracking-wider text-ui-secondary">{{ domain }}</p>
+      <p class="text-sm font-semibold leading-snug text-ui-ink">
         {{ title || 'Link title will appear here' }}
       </p>
-      <p v-if="description" class="line-clamp-2 pt-0.5 text-xs leading-relaxed text-slate-400">
+      <p v-if="description" class="line-clamp-2 pt-0.5 text-xs leading-relaxed text-ui-secondary">
         {{ description }}
       </p>
-      <p v-else-if="showDescriptionPlaceholder" class="pt-0.5 text-xs italic leading-relaxed text-slate-500">
+      <p v-else-if="showDescriptionPlaceholder" class="pt-0.5 text-xs italic leading-relaxed text-ui-muted">
         Description will appear here
       </p>
     </div>

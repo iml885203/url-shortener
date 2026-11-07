@@ -8,7 +8,13 @@ export interface DashboardEnv {
   // Static assets (dashboard SPA)
   ASSETS: Fetcher;
   // Environment variables
-  API_KEY: string;
+  API_KEY?: string;
+  OIDC_ISSUER?: string;
+  OIDC_CLIENT_ID?: string;
+  OIDC_CLIENT_SECRET?: string;
+  OIDC_REQUIRED_GROUP?: string;
+  OIDC_PROVIDER_NAME?: string;
+  SESSION_SECRET?: string;
   SHORT_BASE_URL: string;
   R2_BASE_URL: string;
   DEFAULT_OG_IMAGE: string;

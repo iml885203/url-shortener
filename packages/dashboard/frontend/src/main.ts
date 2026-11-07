@@ -1,6 +1,9 @@
 import { createApp } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import App from './App.vue';
+import PrimeVue from 'primevue/config';
+import './ui/theme';
+import { refreshAuth } from './auth';
 import './style.css';
 
 // Lazy-loaded views
@@ -25,13 +28,13 @@ const router = createRouter({
 });
 
 // Auth guard
-router.beforeEach((to) => {
-  const key = localStorage.getItem('api_key');
-  if (!to.meta.public && !key) {
-    return '/login';
-  }
+router.beforeEach(async (to) => {
+  const valid = await refreshAuth();
+  if (!to.meta.public && !valid) return '/login';
+  if (to.path === '/login' && valid) return '/overview';
 });
 
 const app = createApp(App);
+app.use(PrimeVue, { unstyled: true });
 app.use(router);
 app.mount('#app');

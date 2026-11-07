@@ -12,12 +12,14 @@
     "@url-shortener/shared": "*",
     "fast-png": "^8.0.0",
     "hono": "^4.12.5",
+    "jose": "^6.2.15",
+    "openid-client": "^6.8.9",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260307.1",
+    "@cloudflare/workers-types": "^5.20261106.1",
     "@types/qrcode": "^1.5.6",
     "typescript": "^5.9.3",
-    "wrangler": "^4.71.0"
+    "wrangler": "^4.158.0"
   }
 }

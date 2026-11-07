@@ -65,7 +65,7 @@ Handles all public URL resolution:
 
 ### Cloudflare Worker — Dashboard (`packages/dashboard`)
 
-Routes: `your-domain.com/api/*` and `your-domain.com/dashboard/*`
+Routes: `your-domain.com/api/*`, `your-domain.com/dashboard/*` and `your-domain.com/auth/*`
 
 Serves the admin API (Hono framework) and the compiled Vue 3 SPA as static assets.
 
@@ -80,14 +80,15 @@ Serves the admin API (Hono framework) and the compiled Vue 3 SPA as static asset
 | `GET` | `/api/links/:id/stats` | Click stats (by day / referrer / country) |
 | `POST` | `/api/upload` | Upload OG image to R2 |
 
-Authentication: `API_KEY` secret (set via `wrangler secret put API_KEY`). Accepts either `Authorization: Bearer <key>` or `X-API-Key: <key>` header.
+Authentication accepts the `API_KEY` secret via `Authorization: Bearer <key>` or `X-API-Key: <key>`, or a valid server-side OIDC session. `/api/auth/session` reports sign-in options without starting authorization. OIDC is optional; see [configuration and session behavior](README.md#optional-openid-connect-sign-in).
 
 ### D1 Database
 
-Cloudflare's serverless SQLite. Two tables:
+Cloudflare's serverless SQLite. Application tables:
 
 - `links` — stores each link's URL and OG metadata.
 - `clicks` — append-only log of every redirect event.
+- `auth_sessions`, `auth_revoked`, `auth_replay` — independent OIDC session, subject revocation and replay state. Authentication reads go to the primary, without the redirect KV cache.
 
 ### KV Store
 
@@ -117,7 +118,8 @@ A Vite-built single-page app served as static assets from the Dashboard Worker. 
 - Create / edit links (URL + OG meta)
 - OG image upload with preview
 - Click statistics (daily trend, referrer breakdown, country breakdown)
-- API key login (stored in `localStorage`)
+- API token login (stored in `localStorage`) and optional OIDC SSO (HttpOnly server-side session)
+- Neutral semantic UI tokens with browser-local system/light/dark preference
 
 Stack: Vue 3 + Vue Router + Vite + Tailwind CSS
 

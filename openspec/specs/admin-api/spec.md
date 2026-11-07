@@ -4,11 +4,11 @@
 
 Define the authenticated dashboard/admin API contract for link management, share/QR utilities, analytics, upload, and OG metadata preview.
 ## Requirements
-### Requirement: API key authentication for admin endpoints
-All `/api/*` admin endpoints MUST require a valid `X-API-Key` header.
+### Requirement: Authentication for admin endpoints
+All admin endpoints except public sign-in discovery at `/api/auth/session` MUST require a valid `X-API-Key` or Bearer API key, or a valid application session when optional OIDC is configured. Cookie-authenticated mutations MUST reject requests without the configured same Origin.
 
 #### Scenario: Missing or invalid API key
-- **WHEN** a request is sent to any admin endpoint without a valid API key
+- **WHEN** a request is sent to any admin endpoint without a valid API key or application session
 - **THEN** the system MUST return `401` with `{ "error": "Unauthorized" }`
 
 #### Scenario: Valid API key
@@ -16,7 +16,7 @@ All `/api/*` admin endpoints MUST require a valid `X-API-Key` header.
 - **THEN** the system MUST continue request processing and return endpoint-specific response
 
 ### Requirement: API key verification endpoint
-The system MUST provide `GET /api/me` for API key verification.
+The system MUST provide `GET /api/me` for API key or application-session verification.
 
 #### Scenario: Verify key success
 - **WHEN** `GET /api/me` is called with a valid API key

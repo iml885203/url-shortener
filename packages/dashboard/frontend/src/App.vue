@@ -1,15 +1,16 @@
 <template>
-  <div class="tool-shell min-h-screen bg-slate-950 text-slate-100">
-    <!-- Desktop top nav -->
-    <nav
-      v-if="isLoggedIn"
-      class="hidden items-center gap-4 border-b border-slate-800 bg-slate-900 px-4 py-3 sm:flex"
-    >
-      <span class="tool-heading text-lg font-semibold text-slate-100">URL Shortener</span>
-      <AppButton to="/overview" :variant="tabVariant('overview')" class="h-9 px-3">Overview</AppButton>
-      <AppButton to="/links" :variant="tabVariant('links')" class="h-9 px-3">Links</AppButton>
-      <AppButton to="/links/new" :variant="tabVariant('create')" class="h-9 px-3">Create</AppButton>
-      <AppButton variant="ghost" class="ml-auto h-9 px-3" @click="logout" aria-label="Logout">
+  <div class="tool-shell min-h-screen bg-ui-canvas text-ui-ink">
+    <header class="border-b border-ui-edge bg-ui-canvas">
+      <div class="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
+        <span class="tool-heading shrink-0 text-base font-semibold text-ui-ink">URL Shortener</span>
+        <nav v-if="isLoggedIn" aria-label="Main navigation" class="hidden items-center gap-2 sm:flex">
+          <AppButton to="/overview" :variant="tabVariant('overview')" class="h-9 px-3">Overview</AppButton>
+          <AppButton to="/links" :variant="tabVariant('links')" class="h-9 px-3">Links</AppButton>
+          <AppButton to="/links/new" :variant="tabVariant('create')" class="h-9 px-3">Create</AppButton>
+        </nav>
+        <div class="ml-auto flex items-center gap-2">
+          <ThemeControl />
+      <AppButton variant="ghost" class="hidden h-9 px-3 sm:inline-flex" @click="logout" aria-label="Logout">
         <template #icon>
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
@@ -17,23 +18,26 @@
         </template>
         Logout
       </AppButton>
-    </nav>
+        </div>
+      </div>
+    </header>
 
     <main class="mx-auto max-w-5xl px-4 py-6 pb-24 sm:py-8 sm:pb-8">
+      <p v-if="logoutError" role="alert" class="mb-4 text-ui-danger">{{ logoutError }}</p>
       <RouterView />
     </main>
 
     <!-- Mobile bottom nav -->
     <nav
       v-if="isLoggedIn"
-      class="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-slate-800 bg-slate-900/95 backdrop-blur-sm sm:hidden"
+      class="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-ui-edge bg-ui-raised/95  sm:hidden"
     >
       <RouterLink
         v-for="tab in tabs"
         :key="tab.id"
         :to="tab.to"
-        class="flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors"
-        :class="isActiveTab(tab.id) ? 'text-blue-400' : 'text-slate-400'"
+        class="flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors"
+        :class="isActiveTab(tab.id) ? 'text-ui-focus' : 'text-ui-secondary'"
       >
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" :d="tab.icon" />
@@ -41,7 +45,7 @@
         {{ tab.label }}
       </RouterLink>
       <button
-        class="flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-slate-400 transition-colors"
+        class="flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium text-ui-secondary transition-colors"
         @click="logout"
       >
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -54,7 +58,7 @@
     <Transition name="toast">
       <div
         v-if="toastVisible"
-        class="pointer-events-none fixed bottom-20 left-1/2 z-[60] -translate-x-1/2 rounded-md border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-100 sm:bottom-6"
+        class="pointer-events-none fixed bottom-20 left-1/2 z-[60] -translate-x-1/2 rounded-md border border-ui-control-edge bg-ui-raised px-4 py-2 text-sm text-ui-ink sm:bottom-6"
       >
         Copied
       </div>
@@ -63,16 +67,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, provide } from 'vue';
+import { ref, provide } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import AppButton from '@/components/ui/AppButton.vue';
+import ThemeControl from '@/components/ui/ThemeControl.vue';
+import { authenticated as isLoggedIn, logout as signOut } from '@/auth';
 
 const router = useRouter();
 const route = useRoute();
-const isLoggedIn = computed(() => {
-  route.fullPath;
-  return !!localStorage.getItem('api_key');
-});
+const logoutError = ref('');
 
 const tabs = [
   {
@@ -108,9 +111,9 @@ function tabVariant(tab: 'overview' | 'links' | 'create'): 'secondary' | 'ghost'
   return isActiveTab(tab) ? 'secondary' : 'ghost';
 }
 
-function logout() {
-  localStorage.removeItem('api_key');
-  router.push('/login');
+async function logout() {
+  try { await signOut(); await router.replace('/login'); }
+  catch (error) { logoutError.value = (error as Error).message; }
 }
 
 const toastVisible = ref(false);
