@@ -2,7 +2,10 @@
   <div class="tool-shell min-h-screen bg-ui-canvas text-ui-ink">
     <header class="border-b border-ui-edge bg-ui-canvas">
       <div class="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
-        <span class="tool-heading shrink-0 text-base font-semibold text-ui-ink">URL Shortener</span>
+        <span class="tool-heading flex shrink-0 items-center gap-2 text-base font-semibold text-ui-ink">
+          <img :src="logoUrl" alt="" width="24" height="24" />
+          URL Shortener
+        </span>
         <nav v-if="isLoggedIn" aria-label="Main navigation" class="hidden items-center gap-2 sm:flex">
           <AppButton to="/overview" :variant="tabVariant('overview')" class="h-9 px-3">Overview</AppButton>
           <AppButton to="/links" :variant="tabVariant('links')" class="h-9 px-3">Links</AppButton>
@@ -73,6 +76,7 @@ import AppButton from '@/components/ui/AppButton.vue';
 import ThemeControl from '@/components/ui/ThemeControl.vue';
 import { authenticated as isLoggedIn, logout as signOut } from '@/auth';
 
+const logoUrl = import.meta.env.BASE_URL + 'logo.svg';
 const router = useRouter();
 const route = useRoute();
 const logoutError = ref('');
