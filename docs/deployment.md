@@ -31,14 +31,13 @@ cp packages/dashboard/wrangler.toml.example packages/dashboard/wrangler.toml
 
 Edit both files with the IDs printed above, your domain and preview-image URLs. The local configuration files are ignored by Git. Keep `/dashboard/*`, `/api/*` and `/auth/*` on the dashboard Worker; all other paths go to the redirect Worker.
 
-Apply every migration in filename order, then set a strong API token on both Workers. Enter the same token at each secret prompt:
+Apply every migration in filename order, then set a strong API token on the dashboard Worker:
 
 ```bash
 for migration in migrations/*.sql; do
   npx wrangler d1 execute url-shortener --config=packages/dashboard/wrangler.toml --file="$migration" --remote
 done
 
-npx wrangler secret put API_KEY --config=packages/redirect/wrangler.toml
 npx wrangler secret put API_KEY --config=packages/dashboard/wrangler.toml
 ```
 
