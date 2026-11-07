@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "units": {
     "foundation": {
-      "snapshot": "neutral-ui-42bca7c7a1ddd6a9",
+      "snapshot": "neutral-ui-93fd6563391550a6",
       "files": {
-        "packages/dashboard/frontend/src/ui/foundation/style.css": "f4275b5da2eb94239e9f71800fc60e9f6106d9619c8c6d1c35c56e5c1a96055a",
+        "packages/dashboard/frontend/src/ui/foundation/style.css": "7367863e80aa48c296706f9bb82426c1db7ee400ef037fddcb4d64aede8c6c39",
         "packages/dashboard/frontend/src/ui/foundation/theme.js": "c1fad28f965594678bc06ed1c90c31305f2542540f0b9a8f0889f74ff0d85e2b",
         "packages/dashboard/frontend/src/ui/foundation/theme.d.ts": "7cd76e02fc6a386d450ee5fc8e817a2119d45aac90dd84897d36960589645d30",
-        "packages/dashboard/frontend/src/ui/foundation/tailwind.js": "2d5a2b2f5b9239f5dd6ecca52aaabe863bbecd16f6967d5e72d268551fb4611c"
+        "packages/dashboard/frontend/src/ui/foundation/tailwind.js": "25e9897d69e454b8b1897b114acffd28b2468e0cd5cf95853988a69dd9bb39dc"
       }
     }
   }

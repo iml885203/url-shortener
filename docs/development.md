@@ -18,6 +18,17 @@ after verification. A snapshot hash checks content, not provenance authenticity.
 The current stylesheet and Tailwind mapping support the app's system/light/dark
 preference. Components and task layouts remain local to this application.
 
+The foundation provides recommended defaults; the app owns its design decisions.
+`AppButton` separates appearance (`primary`, `secondary`, `danger`, `ghost`) from
+size (`sm`, `md`, `lg`, `icon`). The defaults are 32/36/40px on desktop and at
+least 44px on narrow or coarse-pointer devices. Use these variants instead of
+conflicting height classes. `ThemeControl` delegates selection, keyboard and
+popup behavior to PrimeVue Select; its CSS remains app-owned. Add deliberate
+overrides in the app stylesheet, and verify a compact action row, form, popup,
+disabled/loading states, and both themes at desktop and mobile widths before
+accepting an updated snapshot.
+
+
 ## Verification
 
 ```bash

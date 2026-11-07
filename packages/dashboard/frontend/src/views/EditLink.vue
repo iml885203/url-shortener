@@ -12,7 +12,7 @@
             <div v-if="link!.customUrl" class="flex items-center gap-2">
               <span class="w-14 flex-shrink-0 text-ui-focus">Custom:</span>
               <a :href="link!.customUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate">{{ link!.customUrl }}</a>
-              <AppButton type="button" variant="ghost" aria-label="Copy custom URL" class="h-9 w-9 px-0" @click="copyUrl(link!.customUrl!)">
+              <AppButton type="button" variant="ghost" aria-label="Copy custom URL" size="icon" @click="copyUrl(link!.customUrl!)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                     <rect x="9" y="9" width="13" height="13" rx="2"></rect>
@@ -25,7 +25,7 @@
             <div class="flex items-center gap-2">
               <span class="w-14 flex-shrink-0 text-ui-secondary">Short:</span>
               <a :href="link!.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate">{{ link!.shortUrl }}</a>
-              <AppButton type="button" variant="ghost" aria-label="Copy short URL" class="h-9 w-9 px-0" @click="copyUrl(link!.shortUrl)">
+              <AppButton type="button" variant="ghost" aria-label="Copy short URL" size="icon" @click="copyUrl(link!.shortUrl)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                     <rect x="9" y="9" width="13" height="13" rx="2"></rect>
@@ -44,7 +44,7 @@
               >
                 {{ link!.longUrl }}
               </a>
-              <AppButton type="button" variant="ghost" aria-label="Copy long URL" class="h-9 w-9 px-0" @click="copyUrl(link!.longUrl)">
+              <AppButton type="button" variant="ghost" aria-label="Copy long URL" size="icon" @click="copyUrl(link!.longUrl)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                     <rect x="9" y="9" width="13" height="13" rx="2"></rect>
@@ -63,7 +63,7 @@
               >
                 {{ debugOgUrl }}
               </a>
-              <AppButton type="button" variant="ghost" aria-label="Copy debug OG URL" class="h-9 w-9 px-0" @click="copyUrl(debugOgUrl)">
+              <AppButton type="button" variant="ghost" aria-label="Copy debug OG URL" size="icon" @click="copyUrl(debugOgUrl)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                     <rect x="9" y="9" width="13" height="13" rx="2"></rect>
@@ -82,7 +82,7 @@
           <div>
             <label for="link-customSlug" class="mb-1 block text-sm font-medium text-ui-ink">Custom Slug <span class="text-ui-secondary font-normal">(optional — leave blank to clear)</span></label>
             <div class="flex items-center">
-              <span class="flex min-h-11 items-center rounded-l-md border border-r-0 border-ui-control-edge bg-ui-raised px-3 text-xs text-ui-secondary select-none">{{ baseUrlShort }}/</span>
+              <span class="flex min-h-control items-center rounded-l-md border border-r-0 border-ui-control-edge bg-ui-raised px-3 text-xs text-ui-secondary select-none">{{ baseUrlShort }}/</span>
               <input
                 id="link-customSlug" v-model="form.customSlug"
                 type="text"

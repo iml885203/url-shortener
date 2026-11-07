@@ -25,6 +25,9 @@
   --ui-font: "Avenir Next", "Avenir", "PingFang TC", "Microsoft JhengHei", sans-serif;
   --ui-radius-small: 4px;
   --ui-radius-control: 8px;
+  --ui-control-height-sm: 32px;
+  --ui-control-height: 36px;
+  --ui-control-height-lg: 40px;
   --ui-space-1: 4px;
   --ui-space-2: 8px;
   --ui-space-3: 12px;
@@ -61,4 +64,13 @@
   --ui-success: #65d6a4;
   --ui-warning: #f0c76f;
   color-scheme: dark;
+}
+
+/* Dense desktop controls; retain generous targets for touch and narrow layouts. */
+@media (pointer: coarse), (max-width: 639px) {
+  .tool-theme {
+    --ui-control-height-sm: 44px;
+    --ui-control-height: 44px;
+    --ui-control-height-lg: 44px;
+  }
 }

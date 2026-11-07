@@ -98,7 +98,7 @@
                     >
                     <AppButton
                       variant="ghost"
-                      class="h-7 px-2 text-xs"
+                      size="sm"
                       @click="copyUrl(link.shortUrl)"
                       title="Copy short URL"
                     >
@@ -117,7 +117,7 @@
                     >
                     <AppButton
                       variant="ghost"
-                      class="h-7 px-2 text-xs"
+                      size="sm"
                       @click="copyUrl(link.longUrl)"
                       title="Copy long URL"
                     >

@@ -12,6 +12,9 @@ export default {
       },
       fontFamily: { sans: ['var(--ui-font)'] },
       borderRadius: { control: 'var(--ui-radius-control)' },
+      height: { control: 'var(--ui-control-height)', 'control-sm': 'var(--ui-control-height-sm)', 'control-lg': 'var(--ui-control-height-lg)' },
+      minHeight: { control: 'var(--ui-control-height)', 'control-sm': 'var(--ui-control-height-sm)', 'control-lg': 'var(--ui-control-height-lg)' },
+      width: { control: 'var(--ui-control-height)' },
     },
   },
 };

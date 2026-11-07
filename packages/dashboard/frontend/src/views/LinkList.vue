@@ -47,7 +47,7 @@
             <div class="mb-1 text-[11px] uppercase tracking-wide text-ui-secondary">Short URL</div>
             <div class="flex items-center gap-2">
               <a :href="link.shortUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-xs">{{ link.shortUrl }}</a>
-              <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share short URL for link ${link.id}`" @click="shareUrl(link.shortUrl, link.ogTitle)">
+              <AppButton variant="ghost" size="icon" :aria-label="`Share short URL for link ${link.id}`" @click="shareUrl(link.shortUrl, link.ogTitle)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m.75-3-3-3m0 0-3 3m3-3V15" />
@@ -61,7 +61,7 @@
             <div class="mb-1 text-[11px] uppercase tracking-wide text-ui-secondary">Long URL</div>
             <div class="flex items-center gap-2">
               <a :href="link.longUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-xs">{{ link.longUrl }}</a>
-              <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Share long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
+              <AppButton variant="ghost" size="icon" :aria-label="`Share long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m.75-3-3-3m0 0-3 3m3-3V15" />
@@ -75,7 +75,7 @@
             <div class="mb-1 text-[11px] uppercase tracking-wide text-ui-focus">Custom URL</div>
             <div class="flex items-center gap-2">
               <a :href="link.customUrl" target="_blank" class="tool-link min-w-0 flex-1 truncate font-mono text-xs">{{ link.customUrl }}</a>
-              <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy custom URL for link ${link.id}`" @click="shareUrl(link.customUrl!, link.ogTitle)">
+              <AppButton variant="ghost" size="icon" :aria-label="`Copy custom URL for link ${link.id}`" @click="shareUrl(link.customUrl!, link.ogTitle)">
                 <template #icon>
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m.75-3-3-3m0 0-3 3m3-3V15" />
@@ -87,10 +87,10 @@
         </div>
 
         <div class="grid grid-cols-4 gap-1.5 pt-1">
-          <AppButton type="button" variant="secondary" class="h-8 px-0 text-xs" @click="openQr(link)">QR</AppButton>
-          <AppButton :to="`/links/${link.id}/stats`" variant="secondary" class="h-8 px-0 text-xs">Stats</AppButton>
-          <AppButton :to="`/links/${link.id}/edit`" variant="secondary" class="h-8 px-0 text-xs">Edit</AppButton>
-          <AppButton type="button" variant="danger" class="h-8 px-0 text-xs" @click="promptDelete(link)">Delete</AppButton>
+          <AppButton type="button" variant="secondary" size="sm" class="px-0" @click="openQr(link)">QR</AppButton>
+          <AppButton :to="`/links/${link.id}/stats`" variant="secondary" size="sm" class="px-0">Stats</AppButton>
+          <AppButton :to="`/links/${link.id}/edit`" variant="secondary" size="sm" class="px-0">Edit</AppButton>
+          <AppButton type="button" variant="danger" size="sm" class="px-0" @click="promptDelete(link)">Delete</AppButton>
         </div>
       </AppCard>
     </div>
@@ -111,7 +111,7 @@
 
           <div class="mt-2 flex flex-wrap items-center gap-2">
             <a :href="link.shortUrl" target="_blank" class="tool-link font-mono text-xs">{{ link.shortUrl }}</a>
-            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy short URL for link ${link.id}`" @click="shareUrl(link.shortUrl, link.ogTitle)">
+            <AppButton variant="ghost" size="icon" :aria-label="`Copy short URL for link ${link.id}`" @click="shareUrl(link.shortUrl, link.ogTitle)">
               <template #icon>
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                   <rect x="9" y="9" width="13" height="13" rx="2"></rect>
@@ -125,7 +125,7 @@
             <a :href="link.longUrl" target="_blank" :title="link.longUrl" class="tool-link max-w-[240px] truncate font-mono text-xs">
               {{ link.longUrl }}
             </a>
-            <AppButton variant="ghost" class="h-9 w-9 px-0" :aria-label="`Copy long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
+            <AppButton variant="ghost" size="icon" :aria-label="`Copy long URL for link ${link.id}`" @click="shareUrl(link.longUrl, link.ogTitle)">
               <template #icon>
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                   <rect x="9" y="9" width="13" height="13" rx="2"></rect>
@@ -142,7 +142,7 @@
             <a :href="link.customUrl" target="_blank" :title="link.customUrl" class="tool-link font-mono text-xs text-ui-action-hover">
               {{ link.customUrl }}
             </a>
-            <AppButton variant="ghost" class="h-7 w-7 px-0" :aria-label="`Copy custom URL for link ${link.id}`" @click="shareUrl(link.customUrl!, link.ogTitle)">
+            <AppButton variant="ghost" size="icon" :aria-label="`Copy custom URL for link ${link.id}`" @click="shareUrl(link.customUrl!, link.ogTitle)">
               <template #icon>
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                   <rect x="9" y="9" width="13" height="13" rx="2"></rect>
@@ -159,10 +159,10 @@
         </div>
 
         <div class="grid grid-cols-2 gap-1.5">
-          <AppButton type="button" variant="secondary" class="h-8 px-2.5 text-xs" @click="openQr(link)">QR</AppButton>
-          <AppButton :to="`/links/${link.id}/stats`" variant="secondary" class="h-8 px-2.5 text-xs">Stats</AppButton>
-          <AppButton :to="`/links/${link.id}/edit`" variant="secondary" class="h-8 px-2.5 text-xs">Edit</AppButton>
-          <AppButton type="button" variant="danger" class="h-8 px-2.5 text-xs" @click="promptDelete(link)">Delete</AppButton>
+          <AppButton type="button" variant="secondary" size="sm" @click="openQr(link)">QR</AppButton>
+          <AppButton :to="`/links/${link.id}/stats`" variant="secondary" size="sm">Stats</AppButton>
+          <AppButton :to="`/links/${link.id}/edit`" variant="secondary" size="sm">Edit</AppButton>
+          <AppButton type="button" variant="danger" size="sm" @click="promptDelete(link)">Delete</AppButton>
         </div>
       </div>
     </AppCard>
@@ -170,8 +170,8 @@
     <AppCard v-if="!loading && !error && total > 0" variant="compact" class="flex items-center justify-between">
       <p class="text-xs text-ui-secondary">Page {{ page }} / {{ totalPages }} · {{ total }} total</p>
       <div class="flex items-center gap-2">
-        <AppButton type="button" variant="secondary" class="h-8 px-2.5 text-xs" :disabled="page <= 1 || loading" @click="goToPage(page - 1)">Prev</AppButton>
-        <AppButton type="button" variant="secondary" class="h-8 px-2.5 text-xs" :disabled="page >= totalPages || loading" @click="goToPage(page + 1)">Next</AppButton>
+        <AppButton type="button" variant="secondary" size="sm" :disabled="page <= 1 || loading" @click="goToPage(page - 1)">Prev</AppButton>
+        <AppButton type="button" variant="secondary" size="sm" :disabled="page >= totalPages || loading" @click="goToPage(page + 1)">Next</AppButton>
       </div>
     </AppCard>
 

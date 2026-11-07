@@ -10,11 +10,14 @@
 import { computed } from 'vue';
 import { RouterLink, type RouteLocationRaw } from 'vue-router';
 
+type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
+
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
 const props = withDefaults(
   defineProps<{
     variant?: ButtonVariant;
+    size?: ButtonSize;
     to?: RouteLocationRaw;
     href?: string;
     type?: 'button' | 'submit' | 'reset';
@@ -22,6 +25,7 @@ const props = withDefaults(
   }>(),
   {
     variant: 'secondary',
+    size: 'md',
     type: 'button',
     disabled: false,
   }
@@ -49,7 +53,7 @@ const componentProps = computed(() => {
 
 const buttonClass = computed(() => {
   const base =
-    'inline-flex min-h-11 h-11 shrink-0 select-none items-center justify-center gap-2 rounded-control px-4 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ui-focus focus-visible:ring-offset-2 focus-visible:ring-offset-ui-canvas';
+    'inline-flex shrink-0 select-none items-center justify-center gap-2 rounded-control text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ui-focus focus-visible:ring-offset-2 focus-visible:ring-offset-ui-canvas';
 
   const variants: Record<ButtonVariant, string> = {
     primary: 'cursor-pointer bg-ui-focus text-ui-action-contrast hover:bg-ui-action-hover disabled:cursor-not-allowed disabled:opacity-50',
@@ -60,6 +64,13 @@ const buttonClass = computed(() => {
       'cursor-pointer border border-transparent bg-transparent text-ui-secondary hover:bg-ui-hover hover:text-ui-ink disabled:cursor-not-allowed disabled:opacity-50',
   };
 
-  return [base, variants[props.variant], props.disabled && 'pointer-events-none'];
+  const sizes: Record<ButtonSize, string> = {
+    sm: 'h-control-sm min-h-control-sm px-2.5 text-xs',
+    md: 'h-control min-h-control px-3',
+    lg: 'h-control-lg min-h-control-lg px-4',
+    icon: 'h-control min-h-control w-control px-0',
+  };
+
+  return [base, sizes[props.size], variants[props.variant], props.disabled && 'pointer-events-none'];
 });
 </script>

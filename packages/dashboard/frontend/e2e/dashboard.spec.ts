@@ -120,3 +120,16 @@ test('API errors remain readable and do not render stale private content', async
   await expect(page.getByText('Service unavailable. Please retry.')).toBeVisible();
   await expect(page.getByText(link.ogTitle)).toHaveCount(0);
 });
+
+test('size variants keep desktop actions compact and narrow-screen targets generous', async ({ page }) => {
+  await fixture(page, { signedIn: true });
+  for (const width of [375, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/dashboard/links');
+    const qr = page.getByRole('button', { name: 'QR', exact: true }).filter({ visible: true });
+    expect((await qr.boundingBox())!.height).toBe(width === 375 ? 44 : 32);
+    await page.goto('/dashboard/links/new');
+    const create = page.getByRole('button', { name: 'Create Link', exact: true });
+    expect((await create.boundingBox())!.height).toBe(width === 375 ? 44 : 36);
+  }
+});
