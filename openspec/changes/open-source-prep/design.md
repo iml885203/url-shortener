@@ -19,7 +19,7 @@ Documentation-only change to prepare `url-shortener` for public open-source rele
 ## README Structure
 
 ```
-# go.dotw.me — Personal URL Shortener
+# go.ilogan.app — Personal URL Shortener
 ## ✨ Features
 ## 🆓 Why Free?  (Cloudflare free-tier table)
 ## 🏗️ Architecture
@@ -60,7 +60,7 @@ Documentation-only change to prepare `url-shortener` for public open-source rele
 ## Decisions
 
 - MIT license (permissive, standard for personal open-source projects)
-- Use real domain `go.dotw.me` (from TOOLS.md) in docs
+- Use real domain `go.ilogan.app` (from TOOLS.md) in docs
 - Cloudflare free limits from official docs (verified numbers)
 - Keep text-art system diagram for README compat with all Markdown renderers
 - Monorepo structure docs reflect actual `packages/` layout (not old `src/` layout)

@@ -60,7 +60,7 @@ jobs:
           node-version: '22'
       - run: npm ci
       - name: Extract host from SHORT_BASE_URL
-        run: echo "URL_HOST=$(echo '${{ secrets.SHORT_BASE_URL }}' | sed 's|https\?://||')" >> $GITHUB_ENV
+        run: echo "URL_HOST=$(echo 'https://go.ilogan.app' | sed 's|https\?://||')" >> $GITHUB_ENV
       - name: Write wrangler.toml
         working-directory: packages/redirect
         run: |
@@ -71,7 +71,8 @@ jobs:
           compatibility_flags = ["nodejs_compat"]
 
           routes = [
-            { pattern = "${{ env.URL_HOST }}/*", zone_name = "${{ secrets.ZONE_NAME }}" }
+            { pattern = "${{ env.URL_HOST }}/*", zone_name = "ilogan.app" },
+            { pattern = "go.dotw.me/*", zone_name = "dotw.me" }
           ]
 
           [[d1_databases]]
@@ -84,8 +85,8 @@ jobs:
           id = "${{ secrets.KV_NAMESPACE_ID }}"
 
           [vars]
-          SHORT_BASE_URL = "${{ secrets.SHORT_BASE_URL }}"
-          DEFAULT_OG_IMAGE = "${{ secrets.DEFAULT_OG_IMAGE }}"
+          SHORT_BASE_URL = "https://go.ilogan.app"
+          DEFAULT_OG_IMAGE = "https://go.ilogan.app/dashboard/og-default.svg"
           EOF
       - run: npx wrangler deploy
         working-directory: packages/redirect
@@ -103,7 +104,7 @@ jobs:
           node-version: '22'
       - run: npm ci
       - name: Extract host from SHORT_BASE_URL
-        run: echo "URL_HOST=$(echo '${{ secrets.SHORT_BASE_URL }}' | sed 's|https\?://||')" >> $GITHUB_ENV
+        run: echo "URL_HOST=$(echo 'https://go.ilogan.app' | sed 's|https\?://||')" >> $GITHUB_ENV
       - name: Install frontend dependencies
         run: npm ci
         working-directory: packages/dashboard/frontend
@@ -120,9 +121,12 @@ jobs:
           compatibility_flags = ["nodejs_compat"]
 
           routes = [
-            { pattern = "${{ env.URL_HOST }}/api/*", zone_name = "${{ secrets.ZONE_NAME }}" },
-            { pattern = "${{ env.URL_HOST }}/dashboard/*", zone_name = "${{ secrets.ZONE_NAME }}" },
-            { pattern = "${{ env.URL_HOST }}/auth/*", zone_name = "${{ secrets.ZONE_NAME }}" },
+            { pattern = "${{ env.URL_HOST }}/api/*", zone_name = "ilogan.app" },
+            { pattern = "${{ env.URL_HOST }}/dashboard/*", zone_name = "ilogan.app" },
+            { pattern = "${{ env.URL_HOST }}/auth/*", zone_name = "ilogan.app" },
+            { pattern = "go.dotw.me/api/*", zone_name = "dotw.me" },
+            { pattern = "go.dotw.me/dashboard/*", zone_name = "dotw.me" },
+            { pattern = "go.dotw.me/auth/*", zone_name = "dotw.me" },
           ]
 
           [assets]
@@ -143,9 +147,9 @@ jobs:
           bucket_name = "url-shortener-images"
 
           [vars]
-          SHORT_BASE_URL = "${{ secrets.SHORT_BASE_URL }}"
+          SHORT_BASE_URL = "https://go.ilogan.app"
           R2_BASE_URL = "${{ secrets.R2_BASE_URL }}"
-          DEFAULT_OG_IMAGE = "${{ secrets.DEFAULT_OG_IMAGE }}"
+          DEFAULT_OG_IMAGE = "https://go.ilogan.app/dashboard/og-default.svg"
 
           # Set secrets via: wrangler secret put API_KEY
           EOF
