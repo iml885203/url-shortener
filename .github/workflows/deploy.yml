@@ -148,7 +148,7 @@ jobs:
 
           [vars]
           SHORT_BASE_URL = "https://go.ilogan.app"
-          R2_BASE_URL = "${{ secrets.R2_BASE_URL }}"
+          R2_BASE_URL = "https://r2-go.ilogan.app"
           DEFAULT_OG_IMAGE = "https://go.ilogan.app/dashboard/og-default.svg"
 
           # Set secrets via: wrangler secret put API_KEY
