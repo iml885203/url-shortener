@@ -1,5 +1,5 @@
 export const config = {
   get baseUrl(): string {
-    return (window as any).__CONFIG__?.baseUrl ?? window.location.origin;
+    return (window as Window & { __CONFIG__?: { baseUrl?: string } }).__CONFIG__?.baseUrl ?? window.location.origin;
   },
 };

@@ -7,10 +7,6 @@ import {
   sqidsDecodeSlug,
   loganDecodeSlug,
   LOGAN_PATTERN,
-  kvSet,
-  kvDelete,
-  kvSetCustomSlug,
-  kvDeleteCustomSlug,
 } from '@url-shortener/shared';
 import {
   dbListLinksPage,
@@ -151,7 +147,7 @@ function emptyPreview(domain: string): OgPreviewResponse {
 }
 
 const CUSTOM_SLUG_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
-const CUSTOM_SLUG_RESERVED = new Set(['api', 'dashboard', 'assets']);
+const CUSTOM_SLUG_RESERVED = new Set(['api', 'dashboard', 'assets', 'auth']);
 
 function validateCustomSlug(slug: string): string | null {
   if (!CUSTOM_SLUG_PATTERN.test(slug)) {
@@ -166,9 +162,22 @@ function validateCustomSlug(slug: string): string | null {
   return null;
 }
 
+function validLinkBody(body: unknown, update: boolean): boolean {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return false;
+  const values = body as Record<string, unknown>;
+  for (const field of ['url', 'ogTitle', 'ogDesc', 'ogImage', 'customSlug']) {
+    const value = values[field];
+    if (value === undefined) continue;
+    if (value === null && update && field !== 'url') continue;
+    if (typeof value !== 'string') return false;
+  }
+  return values.ogEnabled === undefined || typeof values.ogEnabled === 'boolean';
+}
+
 function buildLinkResponse(
   link: {
     id: number;
+    auto_slug?: string;
     url: string;
     og_title?: string | null;
     og_desc?: string | null;
@@ -189,7 +198,7 @@ function buildLinkResponse(
   return {
     id: link.id,
     url: link.url,
-    shortUrl: `${baseUrl}/${sqidsEncodeId(link.id)}`,
+    shortUrl: `${baseUrl}/${link.auto_slug ?? sqidsEncodeId(link.id)}`,
     longUrl: `${baseUrl}/${loganEncodeId(link.id)}`,
     ogTitle: link.og_title ?? null,
     ogDesc: link.og_desc ?? null,
@@ -209,8 +218,8 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   return value;
 }
 
-function buildLinkSharePayload(link: { id: number; url: string }, baseUrl: string) {
-  const shortUrl = `${baseUrl}/${sqidsEncodeId(link.id)}`;
+function buildLinkSharePayload(link: { id: number; url: string; auto_slug: string }, baseUrl: string) {
+  const shortUrl = `${baseUrl}/${link.auto_slug ?? sqidsEncodeId(link.id)}`;
   const longUrl = `${baseUrl}/${loganEncodeId(link.id)}`;
   return {
     shortUrl,
@@ -260,8 +269,9 @@ export async function getLink(c: Context<{ Bindings: DashboardEnv }>): Promise<R
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const id = parseInt(c.req.param('id') ?? '', 10);
-  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+  const rawId = c.req.param('id') ?? '';
+  const id = /^[1-9][0-9]*$/.test(rawId) ? Number(rawId) : NaN;
+  if (!Number.isSafeInteger(id)) return c.json({ error: 'Invalid ID' }, 400);
 
   const link = await dbGetLink(c.env.DB, id);
   if (!link) return c.json({ error: 'Link not found' }, 404);
@@ -276,8 +286,9 @@ export async function getLinkShare(c: Context<{ Bindings: DashboardEnv }>): Prom
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const id = parseInt(c.req.param('id') ?? '', 10);
-  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+  const rawId = c.req.param('id') ?? '';
+  const id = /^[1-9][0-9]*$/.test(rawId) ? Number(rawId) : NaN;
+  if (!Number.isSafeInteger(id)) return c.json({ error: 'Invalid ID' }, 400);
 
   const link = await dbGetLink(c.env.DB, id);
   if (!link) return c.json({ error: 'Link not found' }, 404);
@@ -292,8 +303,9 @@ export async function getLinkQr(c: Context<{ Bindings: DashboardEnv }>): Promise
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const id = parseInt(c.req.param('id') ?? '', 10);
-  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+  const rawId = c.req.param('id') ?? '';
+  const id = /^[1-9][0-9]*$/.test(rawId) ? Number(rawId) : NaN;
+  if (!Number.isSafeInteger(id)) return c.json({ error: 'Invalid ID' }, 400);
 
   const type = (c.req.query('type') ?? 'short') as 'short' | 'long';
   if (type !== 'short' && type !== 'long') {
@@ -305,7 +317,7 @@ export async function getLinkQr(c: Context<{ Bindings: DashboardEnv }>): Promise
 
   const baseUrl = c.env.SHORT_BASE_URL;
   const url = type === 'short'
-    ? `${baseUrl}/${sqidsEncodeId(link.id)}`
+    ? `${baseUrl}/${link.auto_slug ?? sqidsEncodeId(link.id)}`
     : `${baseUrl}/${loganEncodeId(link.id)}`;
 
   const png = buildQrPng(url);
@@ -339,6 +351,8 @@ export async function createLink(c: Context<{ Bindings: DashboardEnv }>): Promis
   } catch {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
+
+  if (!validLinkBody(body, false)) return c.json({ error: 'Invalid field types' }, 400);
 
   if (!body.url || !body.url.trim()) {
     return c.json({ error: 'url is required' }, 400);
@@ -376,24 +390,10 @@ export async function createLink(c: Context<{ Bindings: DashboardEnv }>): Promis
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : '';
-    if (msg.includes('UNIQUE') && msg.includes('custom_slug')) {
+    if (msg.includes('Slug already taken') || (msg.includes('UNIQUE') && (msg.includes('custom_slug') || msg.includes('short_codes')))) {
       return c.json({ error: 'Slug already taken' }, 409);
     }
     throw err;
-  }
-
-  // Update KV cache
-  await kvSet(c.env.KV, link.id, {
-    url: link.url,
-    ogTitle: link.og_title,
-    ogDesc: link.og_desc,
-    ogImage: link.og_image,
-    ogEnabled: Boolean(link.og_enabled),
-  });
-
-  // Set custom slug KV pointer
-  if (link.custom_slug) {
-    await kvSetCustomSlug(c.env.KV, link.custom_slug, link.id);
   }
 
   return c.json(buildLinkResponse(link, c.env.SHORT_BASE_URL), 201);
@@ -406,8 +406,9 @@ export async function updateLink(c: Context<{ Bindings: DashboardEnv }>): Promis
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const id = parseInt(c.req.param('id') ?? '', 10);
-  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+  const rawId = c.req.param('id') ?? '';
+  const id = /^[1-9][0-9]*$/.test(rawId) ? Number(rawId) : NaN;
+  if (!Number.isSafeInteger(id)) return c.json({ error: 'Invalid ID' }, 400);
 
   let body: {
     url?: string;
@@ -422,6 +423,8 @@ export async function updateLink(c: Context<{ Bindings: DashboardEnv }>): Promis
   } catch {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
+
+  if (!validLinkBody(body, true)) return c.json({ error: 'Invalid field types' }, 400);
 
   if (body.url !== undefined) {
     if (!body.url.trim()) {
@@ -459,7 +462,7 @@ export async function updateLink(c: Context<{ Bindings: DashboardEnv }>): Promis
     }
   }
 
-  // Fetch existing link to get old custom_slug for KV cleanup
+  // Return a clear 404 before attempting an update
   const existing = await dbGetLink(c.env.DB, id);
   if (!existing) return c.json({ error: 'Link not found' }, 404);
 
@@ -475,35 +478,13 @@ export async function updateLink(c: Context<{ Bindings: DashboardEnv }>): Promis
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : '';
-    if (msg.includes('UNIQUE') && msg.includes('custom_slug')) {
+    if (msg.includes('Slug already taken') || (msg.includes('UNIQUE') && (msg.includes('custom_slug') || msg.includes('short_codes')))) {
       return c.json({ error: 'Slug already taken' }, 409);
     }
     throw err;
   }
 
   if (!updated) return c.json({ error: 'Link not found' }, 404);
-
-  // Update KV cache
-  await kvSet(c.env.KV, id, {
-    url: updated.url,
-    ogTitle: updated.og_title,
-    ogDesc: updated.og_desc,
-    ogImage: updated.og_image,
-    ogEnabled: Boolean(updated.og_enabled),
-  });
-
-  // Sync custom slug KV pointers
-  const oldSlug = existing.custom_slug;
-  const newSlug = updated.custom_slug;
-
-  if (oldSlug && oldSlug !== newSlug) {
-    // Remove old slug pointer
-    await kvDeleteCustomSlug(c.env.KV, oldSlug);
-  }
-  if (newSlug && newSlug !== oldSlug) {
-    // Set new slug pointer
-    await kvSetCustomSlug(c.env.KV, newSlug, id);
-  }
 
   return c.json(buildLinkResponse(updated, c.env.SHORT_BASE_URL));
 }
@@ -515,29 +496,21 @@ export async function deleteLink(c: Context<{ Bindings: DashboardEnv }>): Promis
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const id = parseInt(c.req.param('id') ?? '', 10);
-  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+  const rawId = c.req.param('id') ?? '';
+  const id = /^[1-9][0-9]*$/.test(rawId) ? Number(rawId) : NaN;
+  if (!Number.isSafeInteger(id)) return c.json({ error: 'Invalid ID' }, 400);
 
   const r2BaseUrl = c.env.R2_BASE_URL;
 
-  // Check if there's an OG image to clean up from R2
   const link = await dbGetLink(c.env.DB, id);
-  if (link?.og_image) {
-    const key = r2KeyFromUrl(link.og_image, r2BaseUrl);
-    if (key) {
-      await r2Delete(c.env.R2, key).catch(() => {});
-    }
-  }
 
   const deleted = await dbDeleteLink(c.env.DB, id);
   if (!deleted) return c.json({ error: 'Link not found' }, 404);
 
-  // Invalidate KV cache
-  await kvDelete(c.env.KV, id);
-
-  // Remove custom slug KV pointer if set
-  if (link?.custom_slug) {
-    await kvDeleteCustomSlug(c.env.KV, link.custom_slug);
+  if (link?.og_image) {
+    const key = r2KeyFromUrl(link.og_image, r2BaseUrl);
+    const referenced = await c.env.DB.prepare('SELECT 1 FROM links WHERE og_image = ? LIMIT 1').bind(link.og_image).first();
+    if (key && !referenced) await r2Delete(c.env.R2, key).catch(() => {});
   }
 
   return c.json({ success: true });
@@ -550,8 +523,9 @@ export async function getLinkStats(c: Context<{ Bindings: DashboardEnv }>): Prom
   const denied = authGuard(c);
   if (denied) return denied;
 
-  const id = parseInt(c.req.param('id') ?? '', 10);
-  if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400);
+  const rawId = c.req.param('id') ?? '';
+  const id = /^[1-9][0-9]*$/.test(rawId) ? Number(rawId) : NaN;
+  if (!Number.isSafeInteger(id)) return c.json({ error: 'Invalid ID' }, 400);
 
   const link = await dbGetLink(c.env.DB, id);
   if (!link) return c.json({ error: 'Link not found' }, 404);
@@ -579,7 +553,7 @@ export async function uploadImage(c: Context<{ Bindings: DashboardEnv }>): Promi
   if (!formData) return c.json({ error: 'Invalid form data' }, 400);
 
   const file = formData.get('image') as File | null;
-  if (!file) return c.json({ error: 'image field is required' }, 400);
+  if (!(file instanceof File)) return c.json({ error: 'image field is required' }, 400);
 
   if (file.size > UPLOAD_MAX_BYTES) {
     return c.json({ error: 'Image too large for social preview (max 1MB, recommend <= 600KB)' }, 400);
@@ -593,7 +567,7 @@ export async function uploadImage(c: Context<{ Bindings: DashboardEnv }>): Promi
   const ext = file.type.split('/')[1];
   const linkId = formData.get('linkId') as string | null;
   const prefix = linkId ? `${linkId}` : 'misc';
-  const key = `${prefix}/${Date.now()}.${ext}`;
+  const key = `${prefix}/${crypto.randomUUID()}.${ext}`;
 
   const buffer = await file.arrayBuffer();
   const url = await r2Upload(c.env.R2, key, buffer, file.type, r2BaseUrl);
@@ -614,6 +588,8 @@ export async function fetchOgPreview(c: Context<{ Bindings: DashboardEnv }>): Pr
   } catch {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
+
+  if (!validLinkBody(body, false)) return c.json({ error: 'Invalid field types' }, 400);
 
   if (!body.url || !body.url.trim()) {
     return c.json({ error: 'url is required' }, 400);
@@ -655,7 +631,7 @@ export async function fetchOgPreview(c: Context<{ Bindings: DashboardEnv }>): Pr
 
     const title = readMetaContent(html, 'og:title') ?? readTitleTag(html);
     const description = readMetaContent(html, 'og:description');
-    const image = toAbsoluteUrl(readMetaContent(html, 'og:image'), parsedUrl.toString());
+    const image = toAbsoluteUrl(readMetaContent(html, 'og:image'), response.url || parsedUrl.toString());
 
     return c.json({
       title: title || null,
@@ -696,7 +672,7 @@ export async function getOverviewStats(c: Context<{ Bindings: DashboardEnv }>): 
     topLinks: overview.topLinks.map((link) => ({
       id: link.id,
       url: link.url,
-      shortUrl: `${baseUrl}/${sqidsEncodeId(link.id)}`,
+      shortUrl: `${baseUrl}/${link.auto_slug ?? sqidsEncodeId(link.id)}`,
       longUrl: `${baseUrl}/${loganEncodeId(link.id)}`,
       clickCount: link.click_count,
     })),

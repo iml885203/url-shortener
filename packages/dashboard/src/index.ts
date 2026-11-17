@@ -71,7 +71,7 @@ app.get('/dashboard/*', async (c) => {
   // Serve index.html with injected runtime config (for SPA routes and root)
   const indexRes = await assetsFetcher.fetch(new Request(new URL('/index.html', c.req.url)));
   const html = await indexRes.text();
-  const configScript = `<script>window.__CONFIG__ = ${JSON.stringify({ baseUrl: c.env.SHORT_BASE_URL ?? '' }).replaceAll('<', '\\u003c')}<\/script>`;
+  const configScript = `<script>window.__CONFIG__ = ${JSON.stringify({ baseUrl: c.env.SHORT_BASE_URL ?? '' }).replaceAll('<', '\\u003c')}</script>`;
   const injectedHtml = html.replace('</head>', `${configScript}</head>`);
   return new Response(injectedHtml, {
     status: 200,

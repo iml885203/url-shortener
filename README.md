@@ -33,7 +33,7 @@ Screenshots use example data.
 
 ![Architecture: public redirects and a private dashboard use Cloudflare Workers, D1, KV and R2, with optional OpenID Connect sign-in](docs/architecture.svg)
 
-Two Workers handle public redirects and the private dashboard separately. D1 stores links and clicks, KV caches redirects, and R2 stores preview images. No server to manage. [Architecture details](ARCHITECTURE.md).
+Two Workers handle public redirects and the private dashboard separately. D1 stores links, unique short codes and clicks, and R2 stores preview images. Redirects use D1 directly for consistent renames and deletes; legacy KV caches are no longer used. No server to manage. [Architecture details](ARCHITECTURE.md).
 
 ## Get started
 

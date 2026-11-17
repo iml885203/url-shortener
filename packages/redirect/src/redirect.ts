@@ -2,16 +2,10 @@ import { Context } from 'hono';
 import { RedirectEnv } from './types.js';
 import {
   KVLinkData,
-  LOGAN_PATTERN,
-  loganDecodeSlug,
-  sqidsDecodeSlug,
   isCrawler,
   sha256Hex,
-  kvGet,
-  kvSet,
-  kvGetCustomSlug,
 } from '@url-shortener/shared';
-import { dbGetLink, dbLogClick } from './db.js';
+import { dbGetLinkByCode, dbLogClick } from './db.js';
 
 /**
  * Build an HTML response for crawlers with OG meta tags.
@@ -56,50 +50,17 @@ function buildOgHtml(targetUrl: string, data: KVLinkData, shortUrl: string, defa
  * Main redirect handler for GET /:slug
  */
 export async function handleRedirect(c: Context<{ Bindings: RedirectEnv }>): Promise<Response> {
-  const rawSlug = c.req.param('slug') ?? '';
-  // Decode percent-encoded Unicode characters (e.g. logan encoding o variants)
-  let slug: string;
-  try {
-    slug = decodeURIComponent(rawSlug);
-  } catch {
-    return c.text('Not found', 404);
-  }
+  const slug = c.req.param('slug') ?? '';
 
-  // 1. Decode slug to ID
-  // Resolution order: Logan pattern → custom slug (KV) → Sqids
-  let id: number | null = null;
-  if (LOGAN_PATTERN.test(slug)) {
-    id = loganDecodeSlug(slug);
-  } else {
-    // 2. Check custom slug in KV before trying Sqids
-    const customId = await kvGetCustomSlug(c.env.KV, slug);
-    if (customId !== null) {
-      id = customId;
-    } else {
-      id = sqidsDecodeSlug(slug);
-    }
-  }
-
-  if (id === null) {
-    return c.text('Not found', 404);
-  }
-
-  // 2. Look up link data — KV first, then D1
-  let linkData: KVLinkData | null = await kvGet(c.env.KV, id);
-
-  if (!linkData) {
-    const record = await dbGetLink(c.env.DB, id);
-    if (!record) return c.text('Not found', 404);
-    linkData = {
-      url: record.url,
-      ogTitle: record.og_title,
-      ogDesc: record.og_desc,
-      ogImage: record.og_image,
-      ogEnabled: Boolean(record.og_enabled),
-    };
-    // Backfill KV cache on D1 hit
-    c.executionCtx.waitUntil(kvSet(c.env.KV, id, linkData));
-  }
+  // D1 owns routing and content. KV is eventually consistent: trusting a stale
+  // pointer or a delayed backfill can resurrect renamed/deleted links.
+  const record = await dbGetLinkByCode(c.env.DB, slug);
+  if (!record) return c.text('Not found', 404);
+  const id = record.id;
+  const linkData: KVLinkData = {
+    url: record.url, ogTitle: record.og_title, ogDesc: record.og_desc,
+    ogImage: record.og_image, ogEnabled: Boolean(record.og_enabled),
+  };
 
   const targetUrl = linkData.url;
   const ua = c.req.header('User-Agent') ?? null;

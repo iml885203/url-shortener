@@ -31,12 +31,13 @@ cp packages/dashboard/wrangler.toml.example packages/dashboard/wrangler.toml
 
 Edit both files with the IDs printed above, your domain and preview-image URLs. The local configuration files are ignored by Git. Keep `/dashboard/*`, `/api/*` and `/auth/*` on the dashboard Worker; all other paths go to the redirect Worker.
 
-Apply every migration in filename order, then set a strong API token on the dashboard Worker:
+Apply the initial migrations, then run the guarded short-code backfill. Do not apply `0005_short_codes.sql` directly: it is a template consumed by the script. Then set a strong API token on the dashboard Worker:
 
 ```bash
-for migration in migrations/*.sql; do
+for migration in migrations/000{1,2,3,4}_*.sql; do
   npx wrangler d1 execute url-shortener --config=packages/dashboard/wrangler.toml --file="$migration" --remote
 done
+node scripts/migrate-short-codes.mjs
 
 npx wrangler secret put API_KEY --config=packages/dashboard/wrangler.toml
 ```
@@ -67,6 +68,6 @@ Complete the setup above in your fork, then add these GitHub Actions secrets:
 | `R2_BASE_URL` | Public image origin, such as `https://r2.your-domain.com` |
 | `DEFAULT_OG_IMAGE` | Default preview image, such as `https://your-domain.com/dashboard/og-default.svg` |
 
-Push to `main` to verify and deploy affected Workers. The first deployment needs all migrations applied; subsequent dashboard deployments also apply the additive authentication migration. Worker secrets such as `API_KEY` are configured separately from GitHub Actions secrets.
+Push to `main` to verify and deploy affected Workers. The first deployment needs all migrations applied; subsequent dashboard deployments apply the additive authentication migration and check/apply the short-code migration before deploying dashboard, then redirect. The script checks existing custom/auto code collisions without writes, guards against concurrent link changes, and imports the backfill and triggers in one D1 transaction. Existing collisions stop deployment without renaming anything. Once applied, migration 0005 is skipped. The old dashboard cannot create links during the brief schema-to-dashboard rollout interval; retry after rollout. Roll back only to versions that understand the new registry; do not deploy an older dashboard against this schema. Worker secrets such as `API_KEY` are configured separately from GitHub Actions secrets.
 
 SSO is optional. See [OpenID Connect setup](authentication.md) to enable it. Keep credentials in Worker secrets or ignored local files.

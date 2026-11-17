@@ -33,6 +33,7 @@ accepting an updated snapshot.
 
 ```bash
 npm test
+npm run lint
 npm run check:types
 npm run check:ui-source
 npm --prefix packages/dashboard/frontend run build

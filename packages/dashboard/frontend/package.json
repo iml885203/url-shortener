@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:browser": "playwright test",
-    "screenshots": "UPDATE_README_SCREENSHOTS=1 playwright test e2e/readme.spec.ts"
+    "screenshots": "UPDATE_README_SCREENSHOTS=1 playwright test e2e/readme.spec.ts",
+    "check:types": "vue-tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "primevue": "^4.5.5",
@@ -22,6 +23,7 @@
     "autoprefixer": "^10.4.27",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vue-tsc": "^3.3.14"
   }
 }

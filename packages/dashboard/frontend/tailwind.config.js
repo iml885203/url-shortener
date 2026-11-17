@@ -1,3 +1,4 @@
+import forms from '@tailwindcss/forms';
 import foundation from './src/ui/foundation/tailwind.js';
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -7,8 +8,5 @@ export default {
   theme: {
     extend: {},
   },
-  plugins: [
-    // @ts-ignore
-    require('@tailwindcss/forms'),
-  ],
+  plugins: [forms],
 };

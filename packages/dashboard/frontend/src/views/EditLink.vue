@@ -319,6 +319,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  ++previewFetchSeq.value;
   if (previewDebounceTimer) clearTimeout(previewDebounceTimer);
   if (localFilePreview.value) {
     URL.revokeObjectURL(localFilePreview.value);
@@ -328,6 +329,7 @@ onBeforeUnmount(() => {
 watch(
   () => [form.value.url, form.value.ogEnabled] as const,
   ([url, ogEnabled]) => {
+    const seq = ++previewFetchSeq.value;
     if (previewDebounceTimer) clearTimeout(previewDebounceTimer);
 
     if (ogEnabled) {
@@ -357,7 +359,6 @@ watch(
     }
 
     previewDebounceTimer = setTimeout(async () => {
-      const seq = ++previewFetchSeq.value;
       destinationPreviewLoading.value = true;
       try {
         const preview = await fetchDestinationOgPreview(parsed.toString());

@@ -7,7 +7,7 @@ wrangler d1 create url-shortener
 
 echo ""
 echo "=== Creating KV namespace ==="
-wrangler kv:namespace create KV
+wrangler kv namespace create KV
 
 echo ""
 echo "=== Creating R2 bucket ==="
@@ -15,7 +15,8 @@ wrangler r2 bucket create url-shortener-images
 
 echo ""
 echo "=== Applying D1 migrations ==="
-wrangler d1 execute url-shortener --file=migrations/0001_init.sql
+echo "After writing packages/dashboard/wrangler.toml, apply migrations as documented in docs/deployment.md."
+# Resource IDs must be configured before any remote migration; do not guess them.
 
 echo ""
 echo "Done! Copy the IDs above into wrangler.toml, then:"

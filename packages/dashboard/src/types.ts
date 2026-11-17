@@ -49,6 +49,7 @@ export interface CountryStats {
 
 export interface OverviewTopLinkRow {
   id: number;
+  auto_slug: string;
   url: string;
   click_count: number;
 }

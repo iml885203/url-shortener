@@ -252,6 +252,8 @@ const pageSize = 20;
 const total = ref(0);
 const totalPages = ref(1);
 const qrModal = ref<QrModalState | null>(null);
+let loadSeq = 0;
+let qrSeq = 0;
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const deleteDialogVisible = computed({ get: () => !!deleteTarget.value, set: value => { if (!value) deleteTarget.value = null; } });
@@ -271,11 +273,13 @@ watch(searchInput, (value) => {
 });
 
 onBeforeUnmount(() => {
+  ++loadSeq;
   if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
   closeQrModal();
 });
 
 async function load() {
+  const seq = ++loadSeq;
   loading.value = true;
   error.value = '';
   try {
@@ -284,6 +288,7 @@ async function load() {
       page: page.value,
       pageSize,
     });
+    if (seq !== loadSeq) return;
     links.value = result.items;
     total.value = result.total;
     totalPages.value = result.totalPages;
@@ -292,9 +297,9 @@ async function load() {
       return await load();
     }
   } catch (e: unknown) {
-    error.value = (e as Error).message;
+    if (seq === loadSeq) error.value = (e as Error).message;
   } finally {
-    loading.value = false;
+    if (seq === loadSeq) loading.value = false;
   }
 }
 
@@ -341,10 +346,12 @@ async function shareUrl(url: string, title?: string | null) {
 }
 
 async function openQr(link: Link) {
+  closeQrModal();
+  const seq = qrSeq;
   try {
     const [share, blob] = await Promise.all([getLinkShare(link.id), getLinkQrBlob(link.id, 'short')]);
+    if (seq !== qrSeq) return;
     const imageUrl = URL.createObjectURL(blob);
-    closeQrModal();
     qrModal.value = {
       linkId: link.id,
       activeType: 'short',
@@ -359,22 +366,31 @@ async function openQr(link: Link) {
 }
 
 async function switchQrType(type: 'short' | 'long') {
-  if (!qrModal.value || qrModal.value.activeType === type) return;
-  qrModal.value.activeType = type;
-  qrModal.value.loading = true;
+  const modal = qrModal.value;
+  if (!modal) return;
+  if (modal.activeType === type) {
+    ++qrSeq;
+    modal.loading = false;
+    return;
+  }
+  const seq = ++qrSeq;
+  modal.loading = true;
   try {
-    const blob = await getLinkQrBlob(qrModal.value.linkId, type);
-    if (qrModal.value.imageUrl) URL.revokeObjectURL(qrModal.value.imageUrl);
-    qrModal.value.imageUrl = URL.createObjectURL(blob);
-    qrModal.value.blob = blob;
+    const blob = await getLinkQrBlob(modal.linkId, type);
+    if (seq !== qrSeq || qrModal.value !== modal) return;
+    URL.revokeObjectURL(modal.imageUrl);
+    modal.imageUrl = URL.createObjectURL(blob);
+    modal.blob = blob;
+    modal.activeType = type;
   } catch (e: unknown) {
-    alert((e as Error).message);
+    if (seq === qrSeq) alert((e as Error).message);
   } finally {
-    if (qrModal.value) qrModal.value.loading = false;
+    if (seq === qrSeq && qrModal.value === modal) modal.loading = false;
   }
 }
 
 function closeQrModal() {
+  ++qrSeq;
   if (qrModal.value) {
     URL.revokeObjectURL(qrModal.value.imageUrl);
   }

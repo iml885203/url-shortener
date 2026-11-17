@@ -52,9 +52,9 @@ const domain = computed(() => {
 
 const props = withDefaults(
   defineProps<{
-    title?: string;
-    description?: string;
-    imageUrl?: string;
+    title?: string | null;
+    description?: string | null;
+    imageUrl?: string | null;
     showDescriptionPlaceholder?: boolean;
   }>(),
   {

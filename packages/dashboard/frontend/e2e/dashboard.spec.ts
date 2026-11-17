@@ -5,7 +5,7 @@ async function fixture(page: import('@playwright/test').Page, options: { signedI
   await page.route('http://127.0.0.1:4173/api/**', async route => {
     const request = route.request(), url = new URL(request.url()), path = url.pathname;
     const authorized = request.headers()['x-api-key'] === 'fixture-key';
-    let body: unknown = {}, status = 200;
+    let body: unknown, status = 200;
     if (path === '/api/auth/session') body = { authenticated: authorized, sessionAuthenticated: false, oidc: { enabled: options.sso ?? true, label: 'Example Identity' } };
     else if (path === '/api/me') { status = authorized ? 200 : 401; body = status === 200 ? { success: true } : { error: 'Unauthorized' }; }
     else if (!authorized) { status = 401; body = { error: 'Unauthorized' }; }
@@ -132,4 +132,49 @@ test('size variants keep desktop actions compact and narrow-screen targets gener
     const create = page.getByRole('button', { name: 'Create Link', exact: true });
     expect((await create.boundingBox())!.height).toBe(width === 375 ? 44 : 36);
   }
+});
+
+test('discards an OG response after the target URL is cleared', async ({ page }) => {
+  await fixture(page, { signedIn: true });
+  let release: () => void = () => {};
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  let started: () => void = () => {};
+  const pending = new Promise<void>(resolve => { started = resolve; });
+  await page.route('**/api/preview/fetch-og', async route => {
+    started(); await gate;
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ title: 'Stale response title', description: null, image: null, domain: 'old.example' }) });
+  });
+  await page.goto('/dashboard/links/new');
+  await page.locator('#link-url').fill('https://old.example');
+  await pending;
+  await page.locator('#link-url').fill('');
+  const response = page.waitForResponse('**/api/preview/fetch-og');
+  release();
+  await (await response).finished();
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  await expect(page.getByText('Stale response title')).toHaveCount(0);
+});
+
+test('closing QR while a type request is pending causes no error or stale dialog', async ({ page }) => {
+  await fixture(page, { signedIn: true });
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  page.on('dialog', async dialog => { errors.push(dialog.message()); await dialog.dismiss(); });
+  await page.goto('/dashboard/links');
+  await page.getByRole('button', { name: 'QR', exact: true }).filter({ visible: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  let release: () => void = () => {};
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/links/1/qr?type=long', async route => {
+    await gate; await route.fulfill({ contentType: 'image/png', body: 'fixture' });
+  });
+  const requested = page.waitForRequest('**/api/links/1/qr?type=long');
+  await page.getByRole('button', { name: 'Long', exact: true }).click();
+  await requested;
+  await page.keyboard.press('Escape');
+  const response = page.waitForResponse('**/api/links/1/qr?type=long'); release();
+  await (await response).finished();
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(errors).toEqual([]);
 });

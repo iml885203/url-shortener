@@ -1,4 +1,4 @@
-import { LinkRecord, ClickRecord } from '@url-shortener/shared';
+import { sqidsEncodeId, LinkRecord, ClickRecord } from '@url-shortener/shared';
 import {
   LinkWithStats,
   DayStats,
@@ -63,13 +63,14 @@ export async function dbListLinksPage(
          OR IFNULL(l.og_title, '') LIKE ? ESCAPE '\\'
          OR IFNULL(l.og_desc, '') LIKE ? ESCAPE '\\'
          OR CAST(l.id AS TEXT) LIKE ? ESCAPE '\\'
+         OR IFNULL(l.custom_slug, '') LIKE ? ESCAPE '\\'
          OR (? IS NOT NULL AND l.id = ?)
        )`
     : '';
 
   const searchValue = hasQuery ? `%${escapeLike(trimmedQuery)}%` : '';
   const exactId = hasExactId ? Math.trunc(options.exactId as number) : null;
-  const baseBindings = [searchValue, searchValue, searchValue, searchValue, exactId, exactId];
+  const baseBindings = [searchValue, searchValue, searchValue, searchValue, searchValue, exactId, exactId];
   const countBindings = hasQuery || hasExactId ? baseBindings : [];
   const listBindings = hasQuery || hasExactId ? [...baseBindings, pageSize, offset] : [pageSize, offset];
 
@@ -100,24 +101,25 @@ export async function dbCreateLink(
   db: D1Database,
   data: { url: string; ogTitle?: string; ogDesc?: string; ogImage?: string; ogEnabled?: boolean; customSlug?: string }
 ): Promise<LinkRecord> {
-  const result = await db
-    .prepare(
-      `INSERT INTO links (url, og_title, og_desc, og_image, og_enabled, custom_slug)
-       VALUES (?, ?, ?, ?, ?, ?)
-       RETURNING *`
-    )
-    .bind(
-      data.url,
-      data.ogTitle ?? null,
-      data.ogDesc ?? null,
-      data.ogImage ?? null,
-      data.ogEnabled ? 1 : 0,
-      data.customSlug ?? null
-    )
-    .first<LinkRecord>();
-
-  if (!result) throw new Error('Failed to create link');
-  return result;
+  // Reserve candidate IDs and both codes in one statement via database triggers.
+  // Explicit IDs let us skip future auto codes already owned by a custom code.
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const sequence = await db.prepare("SELECT max(coalesce((SELECT seq FROM sqlite_sequence WHERE name = 'links'), 0), coalesce((SELECT max(id) FROM links), 0)) AS id").first<{ id: number }>();
+    let id = (sequence?.id ?? 0) + 1;
+    while (await db.prepare('SELECT 1 FROM short_codes WHERE code = ?').bind(sqidsEncodeId(id)).first() || sqidsEncodeId(id) === data.customSlug) id++;
+    if (data.customSlug && await db.prepare('SELECT 1 FROM short_codes WHERE code = ?').bind(data.customSlug).first()) throw new Error('Slug already taken');
+    try {
+      const result = await db.prepare(`INSERT INTO links (id, auto_slug, url, og_title, og_desc, og_image, og_enabled, custom_slug)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`)
+        .bind(id, sqidsEncodeId(id), data.url, data.ogTitle ?? null, data.ogDesc ?? null, data.ogImage ?? null, data.ogEnabled ? 1 : 0, data.customSlug ?? null).first<LinkRecord>();
+      if (!result) throw new Error('Failed to create link');
+      return result;
+    } catch (error) {
+      if (!String(error).includes('UNIQUE')) throw error;
+      // A concurrent creator or rename won the reservation. Retry from D1.
+    }
+  }
+  throw new Error('Link allocation contention; please retry');
 }
 
 /**
@@ -135,27 +137,18 @@ export async function dbUpdateLink(
     customSlug?: string | null;
   }
 ): Promise<LinkRecord | null> {
-  const existing = await dbGetLink(db, id);
-  if (!existing) return null;
-
-  const url = data.url ?? existing.url;
-  const ogTitle = data.ogTitle !== undefined ? data.ogTitle : existing.og_title;
-  const ogDesc = data.ogDesc !== undefined ? data.ogDesc : existing.og_desc;
-  const ogImage = data.ogImage !== undefined ? data.ogImage : existing.og_image;
-  const ogEnabled = data.ogEnabled !== undefined ? (data.ogEnabled ? 1 : 0) : existing.og_enabled;
-  // customSlug: undefined = keep existing, null = clear, string = set new
-  const customSlug = data.customSlug !== undefined ? data.customSlug : existing.custom_slug;
-
-  const result = await db
-    .prepare(
-      `UPDATE links
-       SET url = ?, og_title = ?, og_desc = ?, og_image = ?, og_enabled = ?, custom_slug = ?, updated_at = datetime('now')
-       WHERE id = ?
-       RETURNING *`
-    )
-    .bind(url, ogTitle, ogDesc, ogImage, ogEnabled, customSlug, id)
-    .first<LinkRecord>();
-
+  if (data.customSlug && await db.prepare('SELECT 1 FROM short_codes WHERE code = ? AND NOT (link_id = ? AND kind = ?)').bind(data.customSlug, id, 'custom').first()) throw new Error('Slug already taken');
+  // Update only supplied fields so simultaneous edits do not overwrite each other.
+  const fields: [string, string | number | null | undefined][] = [
+    ['url', data.url], ['og_title', data.ogTitle], ['og_desc', data.ogDesc],
+    ['og_image', data.ogImage], ['og_enabled', data.ogEnabled === undefined ? undefined : Number(data.ogEnabled)],
+    ['custom_slug', data.customSlug],
+  ];
+  const supplied = fields.filter(([, value]) => value !== undefined);
+  const assignments = supplied.map(([name]) => `${name} = ?`);
+  const values = supplied.map(([, value]) => value as string | number | null);
+  const result = await db.prepare(`UPDATE links SET ${[...assignments, "updated_at = datetime('now')"].join(', ')} WHERE id = ? RETURNING *`)
+    .bind(...values, id).first<LinkRecord>();
   return result ?? null;
 }
 
@@ -294,7 +287,7 @@ export async function dbGetOverviewStats(db: D1Database): Promise<OverviewStats>
       db.prepare('SELECT COUNT(*) as count FROM links').first<{ count: number }>(),
       db
         .prepare(
-          `SELECT l.id, l.url, COUNT(c.id) as click_count
+          `SELECT l.id, l.auto_slug, l.url, COUNT(c.id) as click_count
            FROM links l
            LEFT JOIN clicks c ON c.link_id = l.id
            GROUP BY l.id
@@ -334,6 +327,7 @@ export async function dbGetOverviewStats(db: D1Database): Promise<OverviewStats>
     totalLinks: Number(totalLinksResult?.count ?? 0),
     topLinks: (topLinksResult.results ?? []).map((link) => ({
       id: link.id,
+      auto_slug: link.auto_slug,
       url: link.url,
       click_count: Number(link.click_count),
     })),

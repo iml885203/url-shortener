@@ -6,6 +6,7 @@ export interface LinkRecord {
   og_image: string | null;
   og_enabled: number;
   custom_slug: string | null;
+  auto_slug: string;
   created_at: string;
   updated_at: string;
 }

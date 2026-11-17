@@ -60,6 +60,8 @@ beforeAll(async () => {
     const sql = (await readFile(new URL('../migrations/' + name, import.meta.url), 'utf8')).replace(/--[^\n]*/g, '');
     for (const statement of sql.split(';').filter(x => x.trim())) await DB.prepare(statement).run();
   }
+  const routingSql = await readFile(new URL('../migrations/0005_short_codes.sql', import.meta.url), 'utf8');
+  for (const statement of routingSql.replace(/--[^\n]*/g, '').match(/\s*CREATE TRIGGER[\s\S]*?END;|[^;]+;/g) ?? []) await DB.prepare(statement).run();
   env = { DB: DB as unknown as D1Database, KV: await mf.getKVNamespace('KV') as unknown as KVNamespace, R2: await mf.getR2Bucket('R2') as unknown as R2Bucket,
     ASSETS: { fetch: async () => new Response('<html><head></head><body></body></html>') } as Fetcher,
     API_KEY: 'fixture-api-key', SHORT_BASE_URL: origin, R2_BASE_URL: 'https://images.example', DEFAULT_OG_IMAGE: '',
